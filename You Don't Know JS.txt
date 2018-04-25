@@ -1,0 +1,468 @@
+WHAT IS SCOPE?
+	Scope is the set of rules that determine where and how a variable can be looked-up.
+
+	-	LHS(Left-Hand Side): 
+		Assignment of value to the variable.
+	-	RHS(Right-Hand Side): 
+		Retrieve the value of the variable.
+
+LEXICAL SCOPE
+	Scope is defined by decisions of where functions are declared.
+
+	Compliation consists of three steps:
+	1)	Tokens
+	2)	Parsing
+	3)	Code generation
+
+FUNCTION VS BLOCK SCOPE
+	Units of scope:
+	-	Function:
+			Any variable declared inside a function is hidden from any enclosing scope.
+	-	Block
+			Any variable declared inside a block ({}).
+	
+	It's a good practice to hide code in function scopes from other scopes to avoid collision and scope polution. Instead of declaring a function and then invoking it, use IIFE (Immediately Invoked Function Expession):
+
+			(function foo(){
+				...
+			})();
+	
+	-	var always belongs to the enclosing scope/function scope.
+	-	let is block scoped.
+	- 	const is block scoped but with a fixed value.
+
+HOISTING
+	Declaration of variables occur in compilation and assignment of values at execuiton time. It's as if declarations are moved to the top of their respective scope.
+
+CLOSURE
+	It's when a function can remember and access it's lexical scope even when invoked outside of it´s lexical scope. Functions treated as first-class values passed around (as parameters e.g. callback) are clear examples of closure.
+
+		function foo() {
+			var a = 2;
+
+			function bar() {
+				console.log( a );
+			}
+
+			return bar;
+		}
+
+		var baz = foo();
+
+		baz(); // 2 -- Whoa, closure was just observed, man. bar() still has a reference to it's lexical scope.
+
+		for (var i=1; i<=5; i++) {
+			setTimeout( function timer(){
+				console.log( i );
+			}, i*1000 );
+		}//	Prints 6 5 times
+
+		for (var i=1; i<=5; i++) {
+			(function(){
+				var j = i;
+				setTimeout( function timer(){
+					console.log( j );
+				}, j*1000 );
+			})();
+		}//	The IIFE creates a scope for j to be declared and immediately assigns it's value by being immediately invoked
+
+		for (let i=1; i<=5; i++) {
+			setTimeout( function timer(){
+				console.log( i );
+			}, i*1000 );
+		}//	The variable is declared for each iteration of the loop
+	
+	Closures enable a pattern called modules, which require:
+		1) An outer wrapping function being invoked, to create the enclosing scope.
+		2) The return value must include reference to at least one inner function that has closure over the private inner scope of the wrapping function.
+
+----------------------------------------------------------------------------------------------------
+
+THIS
+	this is a binding made when a function is invoked and what it points to is determined entirely by the call-site.
+
+	-	callstack:
+		the stack of functions that have been called to get to the current moment in execution.
+	-	call-site:
+		the location in code where a function is called (not where it's declared). For 'this' binding, the call-site we care about is in the invocation before the currently executing function.
+
+THE 4 RULES
+
+	-	DEFAULT BINDING
+		Standalone function invocation, when no other rules apply. Resolves to purely locating the call-site for 'this' binding.
+
+			function foo() {
+				console.log( this.a );
+			}
+
+			var a = 2;
+
+			foo(); // 2
+		
+		If strict mode is enabled, the global scope is not elegible for default binding, so 'this' is set to undefined. Only if the contents of the function using 'this' are in strict mode.
+	
+	-	IMPLICIT BINDING
+		The call-site has a context object, called "owning/containing object". The call-site uses the object context to reference a function, 'this' is binded to that object.
+
+			function foo() {
+				console.log( this.a );
+			}
+
+			var obj = {
+				a: 2,
+				foo: foo
+			};
+
+			obj.foo(); // 2
+	
+		IMPLICITLY LOST
+			Implicitly bound functions can lose their binding, so they fallback to the default binding, global object or undefined, in two cases:
+
+			1)	Function reference/alias to the "containing object" function:
+					function foo() {
+						console.log( this.a );
+					}
+
+					var obj = {
+						a: 2,
+						foo: foo
+					};
+
+					var bar = obj.foo; // function reference/alias!
+
+					var a = "oops, global"; // `a` also property on global object
+
+					bar(); // "oops, global"
+
+				Note: bar is only a reference to foo and the call-site is bar() so the default binding applies.
+
+			2)	Callbacks (etiher our own callbacks or built-in to the language):
+					function foo() {
+						console.log( this.a );
+					}
+
+					function doFoo(fn) {
+						// `fn` is just another reference to `foo`
+
+						fn(); // <-- call-site!
+					}
+
+					var obj = {
+						a: 2,
+						foo: foo
+					};
+
+					var a = "oops, global"; // `a` also property on global object
+
+					doFoo( obj.foo ); // "oops, global"
+				
+				Note: Parameter passing is just an implicit assignment, so the end result is the same as the previous case.
+
+	-	EXPLICIT BINDING
+		The function utilises either call, apply or bind, taking as their first parameter the object to use for 'this'.
+
+			function foo() {
+				console.log( this.a );
+			}
+
+			var obj = {
+				a: 2
+			};
+
+			foo.call( obj ); // 2
+		
+		But this still doesn´t fix the problem of a function losing it's binding, that's why we need a variation if it:
+
+		HARD BINDING
+			Create a function which internally manually explicitly calls the function to be bound, thereby invoking the function with that object always bound.
+
+				function foo() {
+					console.log( this.a );
+				}
+
+				var obj = {
+					a: 2
+				};
+
+				var bar = function() {
+					foo.call( obj );
+				};
+
+				bar(); // 2
+				setTimeout( bar, 100 ); // 2
+
+				// `bar` hard binds `foo`'s `this` to `obj`
+				// so that it cannot be overriden
+				bar.call( window ); // 2
+			
+			The most typical way to wrap a function with a hard binding is creating a re-usable helper, which creates a pass-thru of any arguments passed and any return value recived:
+
+				function foo(something) {
+					console.log( this.a, something );
+					return this.a + something;
+				}
+
+				// simple `bind` helper
+				function bind(fn, obj) {
+					return function() {
+						return fn.apply( obj, arguments );
+					};
+				}
+
+				var obj = {
+					a: 2
+				};
+
+				var bar = bind( foo, obj );
+
+				var b = bar( 3 ); // 2 3
+				console.log( b ); // 5
+			
+			Since hard binding is such a common pattern, it´s provided with ES5, returning a new function that is hard-coded to call the original function with 'this' context set as specified:
+
+				function foo(something) {
+					console.log( this.a, something );
+					return this.a + something;
+				}
+
+				var obj = {
+					a: 2
+				};
+
+				var bar = foo.bind( obj );
+
+				var b = bar( 3 ); // 2 3
+				console.log( b ); // 5
+
+			Many libraries functions and built-in functions in JS (like array functions), provide an optional parameter, which is designed as a work-around for not having to use bind, but internally they use explicit binding.
+
+			CURRYING
+	
+	-	NEW BINDING
+		In JS constructors are just functions that happen to be called with the word 'new' in front of them, they are not attached to classes, nor instantiating a class. Pretty much any function can be called with the word new, making it a constructor call of a function. When this happens:
+
+			1)	A new object is created (constructed).
+			2)	The new object is [[Prototype]] linked.
+			3)	The new object is set as the 'this' binding of that function call.
+			4)	Unless the function returns it's own alternate object, the new object is returned.
+		
+			function foo(a) {
+				this.a = a;
+			}
+
+			var bar = new foo( 2 );
+			console.log( bar.a ); // 2
+
+	ORDER OF THE 4 RULES
+		1)	Is the function called with new (new binding)? If so, this is the newly constructed object.
+
+			var bar = new foo()
+
+		2)	Is the function called with call or apply (explicit binding), even hidden inside a bind hard binding? If so, this is the explicitly specified object.
+
+			var bar = foo.call( obj2 )
+
+		3)	Is the function called with a context (implicit binding), otherwise known as an owning or containing object? If so, this is that context object.
+
+			var bar = obj1.foo()
+
+		4)	Otherwise, default the this (default binding). If in strict mode, pick undefined, otherwise pick the global object.
+			
+			var bar = foo()
+
+		CURRYING
+			The primary reason for new > explicit, is to create a function that ignores the explicit 'this' binding but presents the function's arguments. On of the capabilities of 'bind' is that any arguments passed after 'this' are defaulted as argument for the underlying function.
+
+			function foo(p1,p2) {
+				this.val = p1 + p2;
+			}
+
+			// using `null` here because we don't care about
+			// the `this` hard-binding in this scenario, and
+			// it will be overridden by the `new` call anyway!
+			var bar = foo.bind( null, "p1" );
+
+			var baz = new bar( "p2" );
+
+			baz.val; // p1p2
+	
+IGNORED THIS
+	In explicit binding you can ignore 'this' by passing null, this is common for spreading arrays or currying:
+		function foo(a,b) {
+			console.log( "a:" + a + ", b:" + b );
+		}
+
+		// spreading out array as parameters
+		foo.apply( null, [2, 3] ); // a:2, b:3
+
+		// currying with `bind(..)`
+		var bar = foo.bind( null, 2 );
+		bar( 3 ); // a:2, b:3
+
+	There's a danger of passing null, in some cases (like third parties) can make a reference to 'this', applying the default binding and making a reference to the global object. Which is better to use, instead of null, something like this:
+
+		var ø = Object.create( null );
+
+LEXICAL THIS
+	Arrow functions don't abide by the 4 rules, instead they adopt the 'this' binding from the enclosing scope.
+
+		function foo() {
+			// return an arrow function
+			return (a) => {
+				// `this` here is lexically adopted from `foo()`
+				console.log( this.a );
+			};
+		}
+
+		var obj1 = {
+			a: 2
+		};
+
+		var obj2 = {
+			a: 3
+		};
+
+		var bar = foo.call( obj1 );
+		bar.call( obj2 ); // 2, not 3!
+
+	The arrow function created by foo captures 'this' at call-time. Sinche foo's 'this' was bound to obj1, bar's 'this' will too. Lexical binding of arrow functions cannot be overriden by any of the 4 rules.
+
+	The most common case of arrow functions are callbacks:
+
+		function foo() {
+			setTimeout(() => {
+				// `this` here is lexically adopted from `foo()`
+				console.log( this.a );
+			},100);
+		}
+
+		var obj = {
+			a: 2
+		};
+
+		foo.call( obj ); // 2
+	
+	Which is basically:
+	
+		function foo() {
+			var self = this; // lexical capture of `this`
+			setTimeout( function(){
+				console.log( self.a );
+			}, 100 );
+		}
+
+		var obj = {
+			a: 2
+		};
+
+		foo.call( obj ); // 2
+
+----------------------------------------------------------------------------------------------------
+
+OBJECTS
+	Can be created in two forms:
+
+	-	LITERAL:
+		var myObj = {
+			key: value
+			// ...
+		}; 
+	
+	- CONSTRUCTED FORM:
+		var myObj = new Object();
+		myObj.key = value;
+	
+TYPES
+	There are 6 primary types in JS:
+		- string
+		- number
+		- boolean
+		- null
+		- undefined
+		- object
+	
+	The first 5 are called simple primitives and they are not objects.
+
+	There are a few special object sub-types, called complex primitives:
+		- function
+			A "callable object". Functions in JS are "first class" which means they can be handle like any other plain object.
+		
+		- arrays
+			Objects with extra behavior. The organization of contents in arrays is more structured than general objects.
+		
+	BUILT-IN OBJECTS
+		There are other object sub-types (note first letter is uppercase):
+			- String
+			- Number
+			- Boolean
+			- Object
+			- Function
+			- Array
+			- Date
+			- RegExp
+			- Error
+		
+		These have the appearance of being actual types, even clases. But in JS they are just built-in constructors (function call with a 'new' opeartor) with the result being a newly constructed object of the subtype in question:
+
+			var strPrimitive = "I am a string";
+			typeof strPrimitive;							// "string"
+			strPrimitive instanceof String;					// false
+
+			var strObject = new String( "I am a string" );
+			typeof strObject; 								// "object"
+			strObject instanceof String;					// true
+		
+		To perform operations on them (like checking length) a String object is required. Luckily JS automatically creates these from the "string" object when necessary.
+
+CONTENTS
+	The contents of an object consist of values stored at specifically named locations, called properties.
+
+	To acces a value at a location, we can use:
+
+		-	Property access
+				myObject.a
+
+		-	Key access
+				myObject["a"]
+	
+	Property access requires an Identifier compatible property and key access can take basicallly any string as the name of the property. So with key access we can programaticallly build up the value of the string property name.
+
+		var wantA = true;
+		var myObject = {
+			a: 2
+		};
+
+		var idx;
+
+		if (wantA) {
+			idx = "a";
+		}
+
+		// later
+
+		console.log( myObject[idx] ); // 2
+	
+	In objects, property names are always strings. So if you use any other value other than a string, JS will first convert the value to string.
+
+		var myObject = { };
+
+		myObject[true] = "foo";
+		myObject[3] = "bar";
+		myObject[myObject] = "baz";
+
+		myObject["true"];				// "foo"
+		myObject["3"];					// "bar"
+		myObject["[object Object]"];	// "baz"
+	
+	COMPUTED PROPERTY NAMES
+		ES6 adds the ability to specify an expression, surrounded by [], in the property name position of an object literal declaration:
+
+			var prefix = "foo";
+
+			var myObject = {
+				[prefix + "bar"]: "hello",
+				[prefix + "baz"]: "world"
+			};
+
+			myObject["foobar"]; // hello
+			myObject["foobaz"]; // world
