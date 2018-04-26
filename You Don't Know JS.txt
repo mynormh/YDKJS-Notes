@@ -1,468 +1,2162 @@
 WHAT IS SCOPE?
-	Scope is the set of rules that determine where and how a variable can be looked-up.
+    Scope is the set of rules that determine where and how a variable can be looked-up.
 
-	-	LHS(Left-Hand Side): 
-		Assignment of value to the variable.
-	-	RHS(Right-Hand Side): 
-		Retrieve the value of the variable.
+    -	LHS(Left-Hand Side): 
+        Assignment of value to the variable.
+    -	RHS(Right-Hand Side): 
+        Retrieve the value of the variable.
 
 LEXICAL SCOPE
-	Scope is defined by decisions of where functions are declared.
+    Scope is defined by decisions of where functions are declared.
 
-	Compliation consists of three steps:
-	1)	Tokens
-	2)	Parsing
-	3)	Code generation
+    Compilation consists of three steps:
+    1)	Tokens
+    2)	Parsing
+    3)	Code generation
 
 FUNCTION VS BLOCK SCOPE
-	Units of scope:
-	-	Function:
-			Any variable declared inside a function is hidden from any enclosing scope.
-	-	Block
-			Any variable declared inside a block ({}).
-	
-	It's a good practice to hide code in function scopes from other scopes to avoid collision and scope polution. Instead of declaring a function and then invoking it, use IIFE (Immediately Invoked Function Expession):
+    Units of scope:
+    -	Function:
+            Any variable declared inside a function is hidden from any enclosing scope.
+    -	Block
+            Any variable declared inside a block ({}).
+    
+    It's a good practice to hide code in function scopes from other scopes to avoid collision and scope polution. Instead of declaring a function and then invoking it, use IIFE (Immediately Invoked Function Expession):
 
-			(function foo(){
-				...
-			})();
-	
-	-	var always belongs to the enclosing scope/function scope.
-	-	let is block scoped.
-	- 	const is block scoped but with a fixed value.
+            (function foo(){
+                ...
+            })();
+    
+    -	var always belongs to the enclosing scope/function scope.
+    -	let is block scoped.
+    - 	const is block scoped but with a fixed value.
 
 HOISTING
-	Declaration of variables occur in compilation and assignment of values at execuiton time. It's as if declarations are moved to the top of their respective scope.
+    Declaration of variables occur in compilation and assignment of values at execuiton time. It's as if declarations are moved to the top of their respective scope. const and let are not hoisted.
 
 CLOSURE
-	It's when a function can remember and access it's lexical scope even when invoked outside of it´s lexical scope. Functions treated as first-class values passed around (as parameters e.g. callback) are clear examples of closure.
+    It's when a function can remember and access it's lexical scope even when invoked outside of it´s lexical scope. Functions treated as first-class values passed around (as parameters e.g. callback) are clear examples of closure.
 
-		function foo() {
-			var a = 2;
+        function foo() {
+            var a = 2;
 
-			function bar() {
-				console.log( a );
-			}
+            function bar() {
+                console.log( a );
+            }
 
-			return bar;
-		}
+            return bar;
+        }
 
-		var baz = foo();
+        var baz = foo();
 
-		baz(); // 2 -- Whoa, closure was just observed, man. bar() still has a reference to it's lexical scope.
+        baz(); // 2 -- Whoa, closure was just observed, man. bar() still has a reference to it's lexical scope.
 
-		for (var i=1; i<=5; i++) {
-			setTimeout( function timer(){
-				console.log( i );
-			}, i*1000 );
-		}//	Prints 6 5 times
+        for (var i=1; i<=5; i++) {
+            setTimeout( function timer(){
+                console.log( i );
+            }, i*1000 );
+        }//	Prints 6 5 times
 
-		for (var i=1; i<=5; i++) {
-			(function(){
-				var j = i;
-				setTimeout( function timer(){
-					console.log( j );
-				}, j*1000 );
-			})();
-		}//	The IIFE creates a scope for j to be declared and immediately assigns it's value by being immediately invoked
+        for (var i=1; i<=5; i++) {
+            (function(){
+                var j = i;
+                setTimeout( function timer(){
+                    console.log( j );
+                }, j*1000 );
+            })();
+        }//	The IIFE creates a scope for j to be declared and immediately assigns it's value by being immediately invoked
 
-		for (let i=1; i<=5; i++) {
-			setTimeout( function timer(){
-				console.log( i );
-			}, i*1000 );
-		}//	The variable is declared for each iteration of the loop
-	
-	Closures enable a pattern called modules, which require:
-		1) An outer wrapping function being invoked, to create the enclosing scope.
-		2) The return value must include reference to at least one inner function that has closure over the private inner scope of the wrapping function.
+        for (let i=1; i<=5; i++) {
+            setTimeout( function timer(){
+                console.log( i );
+            }, i*1000 );
+        }//	The variable is declared for each iteration of the loop
+    
+    Closures enable a pattern called modules, which require:
+        1) An outer wrapping function being invoked, to create the enclosing scope.
+        2) The return value must include reference to at least one inner function that has closure over the private inner scope of the wrapping function.
 
 ----------------------------------------------------------------------------------------------------
 
 THIS
-	this is a binding made when a function is invoked and what it points to is determined entirely by the call-site.
+    this is a binding made when a function is invoked and what it points to is determined entirely by the call-site.
 
-	-	callstack:
-		the stack of functions that have been called to get to the current moment in execution.
-	-	call-site:
-		the location in code where a function is called (not where it's declared). For 'this' binding, the call-site we care about is in the invocation before the currently executing function.
+    -	callstack:
+        the stack of functions that have been called to get to the current moment in execution.
+    -	call-site:
+        the location in code where a function is called (not where it's declared). For 'this' binding, the call-site we care about is in the invocation before the currently executing function.
 
 THE 4 RULES
 
-	-	DEFAULT BINDING
-		Standalone function invocation, when no other rules apply. Resolves to purely locating the call-site for 'this' binding.
+    -	DEFAULT BINDING
+        Standalone function invocation, when no other rules apply. Resolves to purely locating the call-site for 'this' binding.
 
-			function foo() {
-				console.log( this.a );
-			}
+            function foo() {
+                console.log( this.a );
+            }
 
-			var a = 2;
+            var a = 2;
 
-			foo(); // 2
-		
-		If strict mode is enabled, the global scope is not elegible for default binding, so 'this' is set to undefined. Only if the contents of the function using 'this' are in strict mode.
-	
-	-	IMPLICIT BINDING
-		The call-site has a context object, called "owning/containing object". The call-site uses the object context to reference a function, 'this' is binded to that object.
+            foo(); // 2
+        
+        If strict mode is enabled, the global scope is not elegible for default binding, so 'this' is set to undefined. Only if the contents of the function using 'this' are in strict mode.
+    
+    -	IMPLICIT BINDING
+        The call-site has a context object, called "owning/containing object". The call-site uses the object context to reference a function, 'this' is binded to that object.
 
-			function foo() {
-				console.log( this.a );
-			}
+            function foo() {
+                console.log( this.a );
+            }
 
-			var obj = {
-				a: 2,
-				foo: foo
-			};
+            var obj = {
+                a: 2,
+                foo: foo
+            };
 
-			obj.foo(); // 2
-	
-		IMPLICITLY LOST
-			Implicitly bound functions can lose their binding, so they fallback to the default binding, global object or undefined, in two cases:
+            obj.foo(); // 2
+    
+        IMPLICITLY LOST
+            Implicitly bound functions can lose their binding, so they fallback to the default binding, global object or undefined, in two cases:
 
-			1)	Function reference/alias to the "containing object" function:
-					function foo() {
-						console.log( this.a );
-					}
+            1)	Function reference/alias to the "containing object" function:
+                    function foo() {
+                        console.log( this.a );
+                    }
 
-					var obj = {
-						a: 2,
-						foo: foo
-					};
+                    var obj = {
+                        a: 2,
+                        foo: foo
+                    };
 
-					var bar = obj.foo; // function reference/alias!
+                    var bar = obj.foo; // function reference/alias!
 
-					var a = "oops, global"; // `a` also property on global object
+                    var a = "oops, global"; // `a` also property on global object
 
-					bar(); // "oops, global"
+                    bar(); // "oops, global"
 
-				Note: bar is only a reference to foo and the call-site is bar() so the default binding applies.
+                Note: bar is only a reference to foo and the call-site is bar() so the default binding applies.
 
-			2)	Callbacks (etiher our own callbacks or built-in to the language):
-					function foo() {
-						console.log( this.a );
-					}
+            2)	Callbacks (etiher our own callbacks or built-in to the language):
+                    function foo() {
+                        console.log( this.a );
+                    }
 
-					function doFoo(fn) {
-						// `fn` is just another reference to `foo`
+                    function doFoo(fn) {
+                        // `fn` is just another reference to `foo`
 
-						fn(); // <-- call-site!
-					}
+                        fn(); // <-- call-site!
+                    }
 
-					var obj = {
-						a: 2,
-						foo: foo
-					};
+                    var obj = {
+                        a: 2,
+                        foo: foo
+                    };
 
-					var a = "oops, global"; // `a` also property on global object
+                    var a = "oops, global"; // `a` also property on global object
 
-					doFoo( obj.foo ); // "oops, global"
-				
-				Note: Parameter passing is just an implicit assignment, so the end result is the same as the previous case.
+                    doFoo( obj.foo ); // "oops, global"
+                
+                Note: Parameter passing is just an implicit assignment, so the end result is the same as the previous case.
 
-	-	EXPLICIT BINDING
-		The function utilises either call, apply or bind, taking as their first parameter the object to use for 'this'.
+    -	EXPLICIT BINDING
+        The function utilises either call, apply or bind, taking as their first parameter the object to use for 'this'.
 
-			function foo() {
-				console.log( this.a );
-			}
+            function foo() {
+                console.log( this.a );
+            }
 
-			var obj = {
-				a: 2
-			};
+            var obj = {
+                a: 2
+            };
 
-			foo.call( obj ); // 2
-		
-		But this still doesn´t fix the problem of a function losing it's binding, that's why we need a variation if it:
+            foo.call( obj ); // 2
+        
+        But this still doesn´t fix the problem of a function losing it's binding, that's why we need a variation if it:
 
-		HARD BINDING
-			Create a function which internally manually explicitly calls the function to be bound, thereby invoking the function with that object always bound.
+        HARD BINDING
+            Create a function which internally manually explicitly calls the function to be bound, thereby invoking the function with that object always bound.
 
-				function foo() {
-					console.log( this.a );
-				}
+                function foo() {
+                    console.log( this.a );
+                }
 
-				var obj = {
-					a: 2
-				};
+                var obj = {
+                    a: 2
+                };
 
-				var bar = function() {
-					foo.call( obj );
-				};
+                var bar = function() {
+                    foo.call( obj );
+                };
 
-				bar(); // 2
-				setTimeout( bar, 100 ); // 2
+                bar(); // 2
+                setTimeout( bar, 100 ); // 2
 
-				// `bar` hard binds `foo`'s `this` to `obj`
-				// so that it cannot be overriden
-				bar.call( window ); // 2
-			
-			The most typical way to wrap a function with a hard binding is creating a re-usable helper, which creates a pass-thru of any arguments passed and any return value recived:
+                // `bar` hard binds `foo`'s `this` to `obj`
+                // so that it cannot be overriden
+                bar.call( window ); // 2
+            
+            The most typical way to wrap a function with a hard binding is creating a re-usable helper, which creates a pass-thru of any arguments passed and any return value recived:
 
-				function foo(something) {
-					console.log( this.a, something );
-					return this.a + something;
-				}
+                function foo(something) {
+                    console.log( this.a, something );
+                    return this.a + something;
+                }
 
-				// simple `bind` helper
-				function bind(fn, obj) {
-					return function() {
-						return fn.apply( obj, arguments );
-					};
-				}
+                // simple `bind` helper
+                function bind(fn, obj) {
+                    return function() {
+                        return fn.apply( obj, arguments );
+                    };
+                }
 
-				var obj = {
-					a: 2
-				};
+                var obj = {
+                    a: 2
+                };
 
-				var bar = bind( foo, obj );
+                var bar = bind( foo, obj );
 
-				var b = bar( 3 ); // 2 3
-				console.log( b ); // 5
-			
-			Since hard binding is such a common pattern, it´s provided with ES5, returning a new function that is hard-coded to call the original function with 'this' context set as specified:
+                var b = bar( 3 ); // 2 3
+                console.log( b ); // 5
+            
+            Since hard binding is such a common pattern, it´s provided with ES5, returning a new function that is hard-coded to call the original function with 'this' context set as specified:
 
-				function foo(something) {
-					console.log( this.a, something );
-					return this.a + something;
-				}
+                function foo(something) {
+                    console.log( this.a, something );
+                    return this.a + something;
+                }
 
-				var obj = {
-					a: 2
-				};
+                var obj = {
+                    a: 2
+                };
 
-				var bar = foo.bind( obj );
+                var bar = foo.bind( obj );
 
-				var b = bar( 3 ); // 2 3
-				console.log( b ); // 5
+                var b = bar( 3 ); // 2 3
+                console.log( b ); // 5
 
-			Many libraries functions and built-in functions in JS (like array functions), provide an optional parameter, which is designed as a work-around for not having to use bind, but internally they use explicit binding.
+            Many libraries functions and built-in functions in JS (like array functions), provide an optional parameter, which is designed as a work-around for not having to use bind, but internally they use explicit binding.
+    
+    -	NEW BINDING
+        In JS constructors are just functions that happen to be called with the word 'new' in front of them, they are not attached to classes, nor instantiating a class. Pretty much any function can be called with the word new, making it a constructor call of a function. When this happens:
 
-			CURRYING
-	
-	-	NEW BINDING
-		In JS constructors are just functions that happen to be called with the word 'new' in front of them, they are not attached to classes, nor instantiating a class. Pretty much any function can be called with the word new, making it a constructor call of a function. When this happens:
+            1)	A new object is created (constructed).
+            2)	The new object is [[Prototype]] linked.
+            3)	The new object is set as the 'this' binding of that function call.
+            4)	Unless the function returns it's own alternate object, the new object is returned.
+        
+            function foo(a) {
+                this.a = a;
+            }
 
-			1)	A new object is created (constructed).
-			2)	The new object is [[Prototype]] linked.
-			3)	The new object is set as the 'this' binding of that function call.
-			4)	Unless the function returns it's own alternate object, the new object is returned.
-		
-			function foo(a) {
-				this.a = a;
-			}
+            var bar = new foo( 2 );
+            console.log( bar.a ); // 2
 
-			var bar = new foo( 2 );
-			console.log( bar.a ); // 2
+    ORDER OF THE 4 RULES
+        1)	Is the function called with new (new binding)? If so, this is the newly constructed object.
 
-	ORDER OF THE 4 RULES
-		1)	Is the function called with new (new binding)? If so, this is the newly constructed object.
+            var bar = new foo()
 
-			var bar = new foo()
+        2)	Is the function called with call or apply (explicit binding), even hidden inside a bind hard binding? If so, this is the explicitly specified object.
 
-		2)	Is the function called with call or apply (explicit binding), even hidden inside a bind hard binding? If so, this is the explicitly specified object.
+            var bar = foo.call( obj2 )
 
-			var bar = foo.call( obj2 )
+        3)	Is the function called with a context (implicit binding), otherwise known as an owning or containing object? If so, this is that context object.
 
-		3)	Is the function called with a context (implicit binding), otherwise known as an owning or containing object? If so, this is that context object.
+            var bar = obj1.foo()
 
-			var bar = obj1.foo()
+        4)	Otherwise, default the this (default binding). If in strict mode, pick undefined, otherwise pick the global object.
+            
+            var bar = foo()
 
-		4)	Otherwise, default the this (default binding). If in strict mode, pick undefined, otherwise pick the global object.
-			
-			var bar = foo()
+        CURRYING
+            The primary reason for new > explicit, is to create a function that ignores the explicit 'this' binding but presents the function's arguments. On of the capabilities of 'bind' is that any arguments passed after 'this' are defaulted as argument for the underlying function.
 
-		CURRYING
-			The primary reason for new > explicit, is to create a function that ignores the explicit 'this' binding but presents the function's arguments. On of the capabilities of 'bind' is that any arguments passed after 'this' are defaulted as argument for the underlying function.
+            function foo(p1,p2) {
+                this.val = p1 + p2;
+            }
 
-			function foo(p1,p2) {
-				this.val = p1 + p2;
-			}
+            // using `null` here because we don't care about
+            // the `this` hard-binding in this scenario, and
+            // it will be overridden by the `new` call anyway!
+            var bar = foo.bind( null, "p1" );
 
-			// using `null` here because we don't care about
-			// the `this` hard-binding in this scenario, and
-			// it will be overridden by the `new` call anyway!
-			var bar = foo.bind( null, "p1" );
+            var baz = new bar( "p2" );
 
-			var baz = new bar( "p2" );
-
-			baz.val; // p1p2
-	
+            baz.val; // p1p2
+    
 IGNORED THIS
-	In explicit binding you can ignore 'this' by passing null, this is common for spreading arrays or currying:
-		function foo(a,b) {
-			console.log( "a:" + a + ", b:" + b );
-		}
+    In explicit binding you can ignore 'this' by passing null, this is common for spreading arrays or currying:
+        function foo(a,b) {
+            console.log( "a:" + a + ", b:" + b );
+        }
 
-		// spreading out array as parameters
-		foo.apply( null, [2, 3] ); // a:2, b:3
+        // spreading out array as parameters
+        foo.apply( null, [2, 3] ); // a:2, b:3
 
-		// currying with `bind(..)`
-		var bar = foo.bind( null, 2 );
-		bar( 3 ); // a:2, b:3
+        // currying with `bind(..)`
+        var bar = foo.bind( null, 2 );
+        bar( 3 ); // a:2, b:3
 
-	There's a danger of passing null, in some cases (like third parties) can make a reference to 'this', applying the default binding and making a reference to the global object. Which is better to use, instead of null, something like this:
+    There's a danger of passing null, in some cases (like third parties) can make a reference to 'this', applying the default binding and making a reference to the global object. Which is better to use, instead of null, something like this:
 
-		var ø = Object.create( null );
+        var ø = Object.create( null );
 
 LEXICAL THIS
-	Arrow functions don't abide by the 4 rules, instead they adopt the 'this' binding from the enclosing scope.
+    Arrow functions don't abide by the 4 rules, instead they adopt the 'this' binding from the enclosing scope.
 
-		function foo() {
-			// return an arrow function
-			return (a) => {
-				// `this` here is lexically adopted from `foo()`
-				console.log( this.a );
-			};
-		}
+        function foo() {
+            // return an arrow function
+            return (a) => {
+                // `this` here is lexically adopted from `foo()`
+                console.log( this.a );
+            };
+        }
 
-		var obj1 = {
-			a: 2
-		};
+        var obj1 = {
+            a: 2
+        };
 
-		var obj2 = {
-			a: 3
-		};
+        var obj2 = {
+            a: 3
+        };
 
-		var bar = foo.call( obj1 );
-		bar.call( obj2 ); // 2, not 3!
+        var bar = foo.call( obj1 );
+        bar.call( obj2 ); // 2, not 3!
 
-	The arrow function created by foo captures 'this' at call-time. Sinche foo's 'this' was bound to obj1, bar's 'this' will too. Lexical binding of arrow functions cannot be overriden by any of the 4 rules.
+    The arrow function created by foo captures 'this' at call-time. Since foo's 'this' was bound to obj1, bar's 'this' will too. Lexical binding of arrow functions cannot be overriden by any of the 4 rules.
 
-	The most common case of arrow functions are callbacks:
+    The most common case of arrow functions are callbacks:
 
-		function foo() {
-			setTimeout(() => {
-				// `this` here is lexically adopted from `foo()`
-				console.log( this.a );
-			},100);
-		}
+        function foo() {
+            setTimeout(() => {
+                // `this` here is lexically adopted from `foo()`
+                console.log( this.a );
+            },100);
+        }
 
-		var obj = {
-			a: 2
-		};
+        var obj = {
+            a: 2
+        };
 
-		foo.call( obj ); // 2
-	
-	Which is basically:
-	
-		function foo() {
-			var self = this; // lexical capture of `this`
-			setTimeout( function(){
-				console.log( self.a );
-			}, 100 );
-		}
+        foo.call( obj ); // 2
+    
+    Which is basically:
+    
+        function foo() {
+            var self = this; // lexical capture of `this`
+            setTimeout( function(){
+                console.log( self.a );
+            }, 100 );
+        }
 
-		var obj = {
-			a: 2
-		};
+        var obj = {
+            a: 2
+        };
 
-		foo.call( obj ); // 2
+        foo.call( obj ); // 2
 
 ----------------------------------------------------------------------------------------------------
 
 OBJECTS
-	Can be created in two forms:
+    Can be created in two forms:
 
-	-	LITERAL:
-		var myObj = {
-			key: value
-			// ...
-		}; 
-	
-	- CONSTRUCTED FORM:
-		var myObj = new Object();
-		myObj.key = value;
-	
+    -	LITERAL:
+        var myObj = {
+            key: value
+            // ...
+        }; 
+    
+    - CONSTRUCTED FORM:
+        var myObj = new Object();
+        myObj.key = value;
+    
 TYPES
-	There are 6 primary types in JS:
-		- string
-		- number
-		- boolean
-		- null
-		- undefined
-		- object
-	
-	The first 5 are called simple primitives and they are not objects.
+    There are 6 primary types in JS:
+        - string
+        - number
+        - boolean
+        - null
+        - undefined
+        - object
+    
+    The first 5 are called simple primitives and they are not objects.
 
-	There are a few special object sub-types, called complex primitives:
-		- function
-			A "callable object". Functions in JS are "first class" which means they can be handle like any other plain object.
-		
-		- arrays
-			Objects with extra behavior. The organization of contents in arrays is more structured than general objects.
-		
-	BUILT-IN OBJECTS
-		There are other object sub-types (note first letter is uppercase):
-			- String
-			- Number
-			- Boolean
-			- Object
-			- Function
-			- Array
-			- Date
-			- RegExp
-			- Error
-		
-		These have the appearance of being actual types, even clases. But in JS they are just built-in constructors (function call with a 'new' opeartor) with the result being a newly constructed object of the subtype in question:
+    There are a few special object sub-types, called complex primitives:
+        - function
+            A "callable object". Functions in JS are "first class" which means they can be handle like any other plain object.
+        
+        - arrays
+            Objects with extra behavior. The organization of contents in arrays is more structured than general objects.
+        
+    BUILT-IN OBJECTS
+        There are other object sub-types (note first letter is uppercase):
+            - String
+            - Number
+            - Boolean
+            - Object
+            - Function
+            - Array
+            - Date
+            - RegExp
+            - Error
+        
+        These have the appearance of being actual types, even clases. But in JS they are just built-in constructors (function call with a 'new' opeartor) with the result being a newly constructed object of the subtype in question:
 
-			var strPrimitive = "I am a string";
-			typeof strPrimitive;							// "string"
-			strPrimitive instanceof String;					// false
+            var strPrimitive = "I am a string";
+            typeof strPrimitive;							// "string"
+            strPrimitive instanceof String;					// false
 
-			var strObject = new String( "I am a string" );
-			typeof strObject; 								// "object"
-			strObject instanceof String;					// true
-		
-		To perform operations on them (like checking length) a String object is required. Luckily JS automatically creates these from the "string" object when necessary.
+            var strObject = new String( "I am a string" );
+            typeof strObject; 								// "object"
+            strObject instanceof String;					// true
+        
+        To perform operations on them (like checking length) a String object is required. Luckily JS automatically creates these from the "string" object when necessary.
 
 CONTENTS
-	The contents of an object consist of values stored at specifically named locations, called properties.
+    The contents of an object consist of values stored at specifically named locations, called properties.
 
-	To acces a value at a location, we can use:
+    To acces a value at a location, we can use:
 
-		-	Property access
-				myObject.a
+        -	Property access
+                myObject.a
 
-		-	Key access
-				myObject["a"]
-	
-	Property access requires an Identifier compatible property and key access can take basicallly any string as the name of the property. So with key access we can programaticallly build up the value of the string property name.
+        -	Key access
+                myObject["a"]
+    
+    Property access requires an Identifier compatible property and key access can take basicallly any string as the name of the property. So with key access we can programaticallly build up the value of the string property name.
 
-		var wantA = true;
-		var myObject = {
-			a: 2
-		};
+        var wantA = true;
+        var myObject = {
+            a: 2
+        };
 
-		var idx;
+        var idx;
 
-		if (wantA) {
-			idx = "a";
-		}
+        if (wantA) {
+            idx = "a";
+        }
 
-		// later
+        // later
 
-		console.log( myObject[idx] ); // 2
-	
-	In objects, property names are always strings. So if you use any other value other than a string, JS will first convert the value to string.
+        console.log( myObject[idx] ); // 2
+    
+    In objects, property names are always strings. So if you use any other value other than a string, JS will first convert the value to string.
 
-		var myObject = { };
+        var myObject = { };
 
-		myObject[true] = "foo";
-		myObject[3] = "bar";
-		myObject[myObject] = "baz";
+        myObject[true] = "foo";
+        myObject[3] = "bar";
+        myObject[myObject] = "baz";
 
-		myObject["true"];				// "foo"
-		myObject["3"];					// "bar"
-		myObject["[object Object]"];	// "baz"
-	
-	COMPUTED PROPERTY NAMES
-		ES6 adds the ability to specify an expression, surrounded by [], in the property name position of an object literal declaration:
+        myObject["true"];				// "foo"
+        myObject["3"];					// "bar"
+        myObject["[object Object]"];	// "baz"
+    
+    COMPUTED PROPERTY NAMES
+        ES6 adds the ability to specify an expression, surrounded by [], in the property name position of an object literal declaration:
 
-			var prefix = "foo";
+            var prefix = "foo";
 
-			var myObject = {
-				[prefix + "bar"]: "hello",
-				[prefix + "baz"]: "world"
-			};
+            var myObject = {
+                [prefix + "bar"]: "hello",
+                [prefix + "baz"]: "world"
+            };
 
-			myObject["foobar"]; // hello
-			myObject["foobaz"]; // world
+            myObject["foobar"]; // hello
+            myObject["foobaz"]; // world
+    
+    ARRAYS
+        Arrays are objects that have a better organization for how and where values are stored:
+
+            var myArray = [ "foo", 42, "bar" ];
+            myArray.length;		// 3
+            myArray[0];			// "foo"
+            myArray[2];			// "bar"
+
+        Since they are objects, although not recommended, you can add properties to them withouth changing the array length:
+
+            var myArray = [ "foo", 42, "bar" ];
+            myArray.baz = "baz";
+            myArray.length;	// 3
+            myArray.baz;	// "baz"
+        
+    DUPLICATING OBJECTS
+        For objects that are JSON-safe (can be serialized to JSON string and then back to JSON with same structure and values) you can use:
+
+            var newObj = JSON.parse( JSON.stringify( someObj ) );
+
+        In cases when you can't ensure JSON-safe, you can create a shallow copy (objects and functions assigned to properties are just references to these objects/functions):
+
+            var newObj = Object.assign( {}, myObject );
+
+            newObj.a;						// 2
+            newObj.b === anotherObject;		// true
+            newObj.c === anotherArray;		// true
+            newObj.d === anotherFunction;	// true
+    
+    PROPERTY DESCRIPTORS
+        These are characteristics every object property has:
+    
+            var myObject = {
+                a: 2
+            };
+
+            Object.getOwnPropertyDescriptor( myObject, "a" );
+            // {
+            //    value: 2,
+            //    writable: true,
+            //    enumerable: true,
+            //    configurable: true
+            // }
+        
+        Those are the default values, but we can modify them (if it's configurable):
+
+            var myObject = {};
+
+            Object.defineProperty( myObject, "a", {
+                value: 2,
+                writable: true,
+                configurable: true,
+                enumerable: true
+            } );
+
+            myObject.a; // 2
+        
+        There are 3 (excluding value) characteristics:
+
+            -	WRITABLE
+                    If you can change the value of a property
+
+            -	CONFIGURABLE
+                    If you can modify the propertie's descriptor definition, using again defineProperty(..). If a property is not configurable, you can still change writable from true to false, but not from false to true. It also prevents from using the delete operator on the property.
+
+            -	ENUMERABLE
+                    If a property will show up in certain object-property enumerations, like for..in loop.
+    
+    IMMUTABILITY
+        To make properties or objects that cannot be changed. All of these approaches create shallow immutability, menaing they only affect the object and direct properties. If any object has a reference to another object (array, object, function, etc.) the contests of that object remain mutable.
+
+        -	OBJECT CONSTANT
+                Combine writable:false and configurable:false. It creates a constant (cannot be changed, redefined or deleted).
+
+                    var myObject = {};
+
+                    Object.defineProperty( myObject, "FAVORITE_NUMBER", {
+                        value: 42,
+                        writable: false,
+                        configurable: false
+                    } );
+
+
+        -	PREVENT EXTENSIONS
+                Prevents an object from having new properties added to it, but leaves the rest of the properties alone.
+
+                    var myObject = {
+                        a: 2
+                    };
+
+                    Object.preventExtensions( myObject );
+
+                    myObject.b = 3;
+                    myObject.b; // undefined
+
+        -	SEAL
+                Object.seal(..) esentially calls Object.preventExtensions(..) but also marks all existing properties as configurable:false. So you cannot add more properties, and also cannot reconfigure or delete existing properties. But you can modify their values.
+
+        -	FREEZE
+                Object.freeze(..) esentially calls Object.seal(..) but also marks all properties as writable:false.
+    
+    [[GET]]
+        When you access an object property, it doesn't just look in the object for the property. It actually performs a [[Get]] operation (like a function call). This function first inspects the object for the property name and if it can find it it returns the value, if not the [[Get]] algorithm defines other important behavior and returns undefined (as opossed to a variable that cannot be resolved, where ReferenceError is thrown).
+
+            var myObject = {
+                a: 2
+            };
+
+            myObject.b; // undefined
+
+    [[PUT]]
+        How this operation behaves differs based on a number of factors, mainly if the property is already present or not.
+
+        If already present:
+            1)	Is the property an accessor descriptor (see below)? Then call the setter.
+            2)	Is the property a data descriptor with writable:false? Then silently fail in non-strict-mode, or throw TypeError in strict-mode.
+            3)	Otherwise, set the value of the property as normal.
+
+    GETTERS & SETTERS
+        ES5 introduces a way to override part of the default operations of [[Get]] and [[Put]] at a per-property level. When a property has a getter and/or setter, the definition becomes an accessor descriptor (as opposed to data descriptor). For accesor descriptors JS ignores the value and writable characteristics, and considers set, get, configurable and enumerable.
+
+            var myObject = {
+                // define a getter for `a`
+                get a() {
+                    return 2;
+                }
+            };
+
+            Object.defineProperty(
+                myObject,	// target
+                "b",		// property name
+                {			// descriptor
+                    // define a getter for `b`
+                    get: function(){ return this.a * 2 },
+
+                    // make sure `b` shows up as an object property
+                    enumerable: true
+                }
+            );
+
+            myObject.a; // 2
+            myObject.b; // 4
+            myObject.a = 3;
+            myObject.a; // 2
+
+        Thus creating a property on the object that doesn't actually hold a value, but whose access automatically results in a hidden function call. And even if we try to set a value for 'a' later or there's a valid setter, the custom getter is hard-coded to return 2.
+
+        It's recommended to always define both a getter and a setter:
+
+            var myObject = {
+                // define a getter for `a`
+                get a() {
+                    return this._a_;
+                },
+
+                // define a setter for `a`
+                set a(val) {
+                    this._a_ = val * 2;
+                }
+            };
+
+            myObject.a = 2;
+
+            myObject.a; // 4
+
+    EXISTENCE
+        You can ask an object if it has a certain property without asking to get that property's value:
+
+            var myObject = {
+                a: 2
+            };
+
+            ("a" in myObject);				// true
+            ("b" in myObject);				// false
+
+            myObject.hasOwnProperty( "a" );	// true
+            myObject.hasOwnProperty( "b" );	// false
+        
+        The in operator checks if the property is in the object, or if it exists at any higher level of the [[Prototype]] chain. hasOwnProperty(..) only checks if the object has the property or not.
+
+        hasOwnProperty(..) is accessible via delegation to Object.prototype. But it is possible to create an object that doesn't link to Object.prototype. So there's a more robust way to check this:
+
+            Object.prototype.hasOwnProperty.call(myObject,"a")
+
+        ENUMERATION
+            There are properties that exists but they won't show up in some loops (for..in) or operations. That's because enumerable basically means "will be included if the object's properties are iterated through".
+
+            var myObject = { };
+
+            Object.defineProperty(
+                myObject,
+                "a",
+                // make `a` enumerable, as normal
+                { enumerable: true, value: 2 }
+            );
+
+            Object.defineProperty(
+                myObject,
+                "b",
+                // make `b` NON-enumerable
+                { enumerable: false, value: 3 }
+            );
+
+            myObject.b; // 3
+            ("b" in myObject); // true
+            myObject.hasOwnProperty( "b" ); // true
+
+            // .......
+
+            for (var k in myObject) {
+                console.log( k, myObject[k] );
+            }
+            // "a" 2
+
+            myObject.propertyIsEnumerable( "a" ); // true
+            myObject.propertyIsEnumerable( "b" ); // false
+
+            Object.keys( myObject ); // ["a"]
+            Object.getOwnPropertyNames( myObject ); // ["a", "b"]
+
+        Object.keys(..) returns an array of all enumerable properties, whereas Object.getOwnPropertyNames(..) returns an array of all properties. Both inspect only the dirct object specified, not references to other objects it may include.
+    
+    ITERATION
+        The for..in loop iterates over the enumerable properties of an object. And the standard for loop iterates over the indices of an array.
+
+        ES5 adds several iteration helpers for arrays:
+
+            -	forEach(..)
+                    Iterates over all the values and ignores any callback return values.
+
+            -	every(..)
+                    Keeps going until the end or the callback returns a false value.
+
+            -	some(..)
+                    Keeps going until the end or the callback returns a true value.
+        
+        But if you want to iterate over the values directly of the array indices (or object properties), ES6 adds a for..of loop:
+
+            var myArray = [ 1, 2, 3 ];
+
+            for (var v of myArray) {
+                console.log( v );
+            }
+            // 1
+            // 2
+            // 3
+        
+        The for..of loop asks for an iterator object of the thing to be iterated, and the loop then iterates over the successive return values from calling that iterator object's next() method, once for each loop iteration.
+
+        Arrays have a built-in @@iterator, so for..of works easily on them. Manually this looks like:
+
+            var myArray = [ 1, 2, 3 ];
+            var it = myArray[Symbol.iterator]();
+
+            it.next(); // { value:1, done:false }
+            it.next(); // { value:2, done:false }
+            it.next(); // { value:3, done:false }
+            it.next(); // { done:true }
+        
+        We get at the @@iterator internal property of an object using ES6 Symbol: Symbol.iterator. Also @@iterator is not the iterator object itself, but a function that returns the iterator object. Note you have to call the next() a fourth time to know you are truly done iterating.
+
+        While arrays have a built-in @@iterator, regular objects do not. But it is possible to define your own @@iterator for any object:
+
+            var myObject = {
+                a: 2,
+                b: 3
+            };
+
+            Object.defineProperty( myObject, Symbol.iterator, {
+                enumerable: false,
+                writable: false,
+                configurable: true,
+                value: function() {
+                    var o = this;
+                    var idx = 0;
+                    var ks = Object.keys( o );
+                    return {
+                        next: function() {
+                            return {
+                                value: o[ks[idx++]],
+                                done: (idx > ks.length)
+                            };
+                        }
+                    };
+                }
+            } );
+
+            // iterate `myObject` manually
+            var it = myObject[Symbol.iterator]();
+            it.next(); // { value:2, done:false }
+            it.next(); // { value:3, done:false }
+            it.next(); // { value:undefined, done:true }
+
+            // iterate `myObject` with `for..of`
+            for (var v of myObject) {
+                console.log( v );
+            }
+            // 2
+            // 3
+        
+        Each time the for..of loop calls next() on the iterator's object, the internal pointer will advance and return the next value. This was a simple value by value iteration, but you can define complex iterations. For example an "infinite" iterator that returns a random number, an incremented value or a unique ID (make sure to limit the "infinite" iterator so it doesn't hang your program).
+
+            var randoms = {
+                [Symbol.iterator]: function() {
+                    return {
+                        next: function() {
+                            return { value: Math.random() };
+                        }
+                    };
+                }
+            };
+
+            var randoms_pool = [];
+            for (var n of randoms) {
+                randoms_pool.push( n );
+
+                // don't proceed unbounded!
+                if (randoms_pool.length === 100) break;
+            }
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+CLASSES
+
+    Classes are just one of several common design patterns (functional, OO, procedural, etc.). Classes don't map very naturally to JS, JS doesn't have classes, but with some effort you can implement approximations for much of class functionality.
+
+    Class/inheritance is a certain form of code organization and architecutre, it implies you classify a certain data structure, thinking about any given structure as a specific variation of a more general base definition.
+    
+    Object Oriented or Class Oriented programming stresses that data intrinsically has associated behavior, so you package up the data and the behavior together.
+
+    Classes have mechanics such as:
+        INSTANTIATION
+            Think of the blue-print/building example, a class is a blue-print and to actually get an object to interact with, you build (aka instantiate) something from the class, the end result is an object/instance of the class. This object is a copy of all the characteristics described by the class.
+
+            Instances of classes are constructed by a special method of the class, usually of the same name as the class, called a constructor. It initializes any information (state) the instance will need.
+
+            //pseudo-code
+            class CoolGuy {
+                specialTrick = nothing
+
+                CoolGuy( trick ) {
+                    specialTrick = trick
+                }
+
+                showOff() {
+                    output( "Here's my trick: ", specialTrick )
+                }
+            }
+
+            Joe = new CoolGuy( "jumping rope" ) //the new keyword indicates the language we want to construct a new instance, calling the constructor
+
+            Joe.showOff() // Here's my trick: jumping rope
+
+        INHERITANCE
+            You can define another class (child) that inherits from the first class (parent). 
+            
+            Once the child class is defined, it's separate and distinct from the parent class. The child class contains an inital copy of the behavior from the parent but it can override any inherited behavior and define new behaviors.
+
+            //pseudo-code
+            class Vehicle {
+                engines = 1
+
+                ignition() {
+                    output( "Turning on my engine." )
+                }
+
+                drive() {
+                    ignition()
+                    output( "Steering and moving forward!" )
+                }
+            }
+
+            class Car inherits Vehicle {
+                wheels = 4	//Defines new wheels data
+
+                drive() {	//Overrides default drive()
+                    inherited:drive()	//References the original pre-override drive()
+                    output( "Rolling on all ", wheels, " wheels!" )
+                }
+            }
+
+            class SpeedBoat inherits Vehicle {
+                engines = 2	//Overrides default engines
+
+                ignition() {	//Overrides default ignition()
+                    output( "Turning on my ", engines, " engines." )
+                }
+
+                pilot() {	//Defines new pilot() behavior
+                    inherited:drive()	//References original pre-override drive()
+                    output( "Speeding through the water with ease!" )
+                }
+            }
+    
+        POLYMORPHISM
+            A class can define it's own method of the same name as the method from the class it inherits and it can also reference the original pre-overriden method.
+
+            Any method can reference another method (of the same or different name) at a higher level of inheritance hierarchy. 
+            
+            In many traditional class-oriented languages, the keyword 'super' is used to reference the class inherited from. The child class only gets a copy of what it needs from the parent, but both the original and overridden versions of that method are maintained.
+            
+            Super also gives us a direct way for the constructor of a child class to reference the constructor of it's parent class. This is because with real classes the constructor belongs to he class, however, in JS it's more like the class belongs to the constructor.
+
+            In the example above, the SpeedBoat class references the inherited version of drive() but Vehicle's drive() references ignition(). So it will use the SpeedBoat version of ignition(). If you were to instantiate Vehicle class and then call it's method drive(), then it would use Vehicle's ignition().
+    
+    MIXINS
+        JS object mechanism doesn't perform copies when you inherit or instantiate. Objects don't get copied to other objects, they get linked together. There are no classes in JS to instantiate, but JS developers fake the copy behavior of classes.
+
+        EXPLICIT MIXINS
+            Since JS will not copy behavior from one class to another, we can instead create a utility that manually copies. This is often called extend(..) by many libraries/frameworks.
+
+                // vastly simplified `mixin(..)` example:
+                function mixin( sourceObj, targetObj ) {
+                    for (var key in sourceObj) {
+                        // only copy if not already present
+                        if (!(key in targetObj)) {
+                            targetObj[key] = sourceObj[key];
+                        }
+                    }
+
+                    return targetObj;
+                }
+
+                var Vehicle = {
+                    engines: 1,
+
+                    ignition: function() {
+                        console.log( "Turning on my engine." );
+                    },
+
+                    drive: function() {
+                        this.ignition();
+                        console.log( "Steering and moving forward!" );
+                    }
+                };
+
+                var Car = mixin( Vehicle, {
+                    wheels: 4,
+
+                    drive: function() {
+                        Vehicle.drive.call( this );
+                        console.log( "Rolling on all " + this.wheels + " wheels!" );
+                    }
+                } );
+            
+            Car now has a copy of the properties and references to the functions from Vehicles. So now, Car has a property called ignition, which is a copied reference to the ignition() function, as well as a property engines with a value of 1. Car already had a drive property so that reference wasn't overridden.
+
+            JS doesn't have a way to reference a property from the inheritance hierarchy. So we explicitly call the drive() frunction from the Vehicle object, but if we said Vehicle.drive() the 'this' binding would be the Vehicle object. Instead, we explicitly use .call(this) to ensure that it's executed in the context of the Car object.
+
+            As a result, Car will opearte somewhat separately from Vehicle. If you add a property onto Car, it will not affect Vehicle, and vice versa, unless the two objects share a reference to an object. Meaning this manual copying (mixins) doesn't actually emulate real copies from class-oriented languages.
+
+            PARASITIC INHERITANCE
+                A popular variation of this explicit mixin.
+
+                // "Traditional JS Class" `Vehicle`
+                function Vehicle() {
+                    this.engines = 1;
+                }
+                Vehicle.prototype.ignition = function() {
+                    console.log( "Turning on my engine." );
+                };
+                Vehicle.prototype.drive = function() {
+                    this.ignition();
+                    console.log( "Steering and moving forward!" );
+                };
+
+                // "Parasitic Class" `Car`
+                function Car() {
+                    // first, `car` is a `Vehicle`
+                    var car = new Vehicle();
+
+                    // now, let's modify our `car` to specialize it
+                    car.wheels = 4;
+
+                    // save a privileged reference to `Vehicle::drive()`
+                    var vehDrive = car.drive;
+
+                    // override `Vehicle::drive()`
+                    car.drive = function() {
+                        vehDrive.call( this );
+                        console.log( "Rolling on all " + this.wheels + " wheels!" );
+                    };
+
+                    return car;
+                }
+
+                var myCar = new Car();
+
+                myCar.drive();
+                // Turning on my engine.
+                // Steering and moving forward!
+                // Rolling on all 4 wheels!
+        
+        IMPLICIT MIXINS
+            It's related to the explicit polymorphism call in the explicit mixin.
+
+                var Something = {
+                    cool: function() {
+                        this.greeting = "Hello World";
+                        this.count = this.count ? this.count + 1 : 1;
+                    }
+                };
+
+                Something.cool();
+                Something.greeting; // "Hello World"
+                Something.count; // 1
+
+                var Another = {
+                    cool: function() {
+                        // implicit mixin of `Something` to `Another`
+                        Something.cool.call( this );
+                    }
+                };
+
+                Another.cool();
+                Another.greeting; // "Hello World"
+                Another.count; // 1 (not shared state with `Something`)
+
+            We esentially call the function Something.cool() in the context of Another (via it's 'this' binding).
+    
+    Usually you'll want to avoid mixins to keep cleaner and more maintainable code. Mixins circumvent the [[Prototype]] chain mechanism.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+PROTOTYPES
+
+    [[PROTOTYPE]]
+        Objects in JS are given, at the time of their creation, an internal property called [[Prototype]], which is a reference to another object.
+
+        When we invoke [[Get]] to reference a property on an object (e.g. myObject.a) that isnt't present on the object directly, the [[Get]] operation proceeds to follow the [[Prototype]] link of the object.
+
+            var anotherObject = {
+                a: 2
+            };
+
+            // create an object linked to `anotherObject`
+            var myObject = Object.create( anotherObject );
+
+            myObject.a; // 2
+        
+        So now, myObject is [[Prototype]] linked to anotherObject. myObject.a doesn't actually exist, but nevertheless, the property access succeeds because it found it on anotherObject instead.
+
+        In case a hadn't been found on anotherObject, it continues to consult the [[Property]] chain. If no matching property is ever found, the [[Get]] operation returns undefined.
+
+        If you use the for..in loop to iterate over an object, any property in it's [[Prototype]] chain (if enumerable) will be enumerated. If you use the operator in, it will check the entire chain (regardless of enumerability).
+
+            var anotherObject = {
+                a: 2
+            };
+
+            // create an object linked to `anotherObject`
+            var myObject = Object.create( anotherObject );
+
+            for (var k in myObject) {
+                console.log("found: " + k);
+            }
+            // found: a
+
+            ("a" in myObject); // true
+    
+    OBJECT.PROTOTYPE
+        The top-end of every normal [[Prototype]] chain is the built-in Object.prototype. This object includes a variety of common utilities in JS (e.g. .toString(), .valueOf(), .hasOwnProperty()) because all normal objects in JS descend from the Object.prototype object.
+
+    SETTING & SHADOWING PROPERTIES
+        myObject.foo = "bar";
+    
+        If myObject already has a normal data accessor property called foo directly on it, the assignment is as simple as changing the value of the existing property.
+
+        If foo is not present directly on myObject, the [[Prototype]] chain is traversed. If foo is not found anywhere in the chain, the property foo is added directly to myObject with the specified value.
+
+        If foo is already present somewhere higher in the chain, foo will be present in both and this is called shadowing. The foo property directly on myObject shadows any foo property higher in the chain, because the myObject.foo look-up would always find the foo property that's lowest in the chain.
+
+        Shadowing is not as simple as it may seem. There are three scenarios for the myObject.foo="bar" assignment when foo is not already on myObject directly, but is at a higher level of it's [[Prototype]] chain:
+
+            1.	If a normal data accessor property named foo is found anywhere higher on the chain and it's not marked as read-only (writable:true) then a new property foo is added directly to myObject. Resulting in a shadowed property.
+
+            2.	If foo is found higher on the chain but it is marked as read-only (writable:false) then both the setting of the existing property and the creation of the shadowed property on myObject are disallowed. No shadowing occurs.
+
+            3.	If foo is found higher on the chain but it's a setter, then the setter will be called. foo will not be added to myObject and the foo setter won't be redefined.
+        
+        If you want to shadow foo in cases #2 and #3, you cannot use '=' assignment, but must instead use Object.defineProperty(..) to add foo directly to myObject.
+
+        Shadowing can even occur implicitly, so care must be taken if trying to avoid it:
+
+            var anotherObject = {
+                a: 2
+            };
+
+            var myObject = Object.create( anotherObject );
+
+            anotherObject.a; // 2
+            myObject.a; // 2
+
+            anotherObject.hasOwnProperty( "a" ); // true
+            myObject.hasOwnProperty( "a" ); // false
+
+            myObject.a++; // oops, implicit shadowing!
+
+            anotherObject.a; // 2
+            myObject.a; // 3
+
+            myObject.hasOwnProperty( "a" ); // true
+        
+        The ++ operation corresponds to myObject.a = myObject.a +1. The result is [[Get]] looking up the property via [[Prototype]] to get 2 from anotherObject.a, incrementing the value by 1, then [[Put]] assigns the value 3 to a shadowed property 'a' on myObject. If you wanted to increment anotherObject.a, the only way is anotherObject.a++.
+
+        Shadowing with methods leads to ugly explicit polymorphism. Usually you'll want to avoid shadowing if possible. Later on we'll see a cleaner alternative to shadowing.
+    
+    CLASS
+        JS just has objects, so classes can't describe what an object can do. The object defines it's own behavior.
+
+        "CLASS" FUNCTIONS
+            There's a kind of behavior in JS that's been abused to hack something like classes. It hinges on the characteristic that all functions by default get a public, non-enumerable property on them called prototype, which points at an otherwise arbitrary object.
+
+                function Foo() {
+                    // ...
+                }
+
+                var a = new Foo();
+
+                Object.getPrototypeOf( a ) === Foo.prototype; // true
+            
+            When a is created by calling new Foo(), one of the things that happens is that a gets an internal [[Prototype]] link to the object that Foo.prototype points at.
+
+            In JS, there are no coppy-action performed (alas class-oriented languages). You don't create instances of a class, you create objects that [[Prototype]] link to a common object. new Foo() results in a new object (a in this case) and that new object is internally [[Prototype]] linked to the Foo.prototype object. We end up with two objects, linked to each other.
+
+            The new Foo()  function calling had really almost nothing direct to do with the process of creating the link. It was sort of an accidental side-efect, new Foo() is an indirect, round-about way to end up with a new object liked to another object.
+        
+            If in classes inheritance visual diagram, the arrows move from left to right (instances) and bottom to top (inheritance), in JS for the [[Prototype]] mechanism they move from right to left and from bottom to top. This mechanism is called "prototypal inheritance".
+
+            Inheritance implies a copy operation, which doesn't exist in JS. Instead, JS creates a link between two objects, where one object can delegate property/function access to another object. Delegation is a much more accurate term for JS's object-linking mechanism.
+        
+        CONSTRUCTORS
+            In the code above, it seems Foo is a "class" because the new keyword is used, just like class-oriented languages do when they construct instances. It also appears we are executing a constructor method of a class, because Foo() is actually a method. And, in JS convention, Foo() is called with a capital letter.
+
+            Also the Foo.prototype object has another characteristic:
+
+                function Foo() {
+                    // ...
+                }
+
+                Foo.prototype.constructor === Foo; // true
+
+                var a = new Foo();
+                a.constructor === Foo; // true
+            
+            The Foo.prototype object by default gets a public, non-enumerable property called constructor, and this property points back to the function the object is associated with. We also see that object a created by the "constructor" call new Foo() seems to also have a constructor property which also points to the function that created it.
+
+            This isn't actually true, a has no constructor property on it, and though a.constructor does point to the Foo function, "constructor" doesn't actually mean "was constructed by". 
+            
+            In reality, Foo is no more a constructor than any other function. Functions themselves are not constructos, however, when you put the new keyword in front of a normal function call, it becomes a "constructor call". Remember, 'new' makes any normal function call returns (constructs) an object in addition to whatever else it was going to do.
+
+                function NothingSpecial() {
+                    console.log( "Don't mind me!" );
+                }
+
+                var a = new NothingSpecial();
+                // "Don't mind me!"
+
+                a; // {}
+            
+            NothingSpecial is just a normal function, but when called with new it constructs an object, which we assign to a. So, functions aren't constructors, but function calls are constructor calls if and only if new is used. In other words, in JS, a constructor is any function called with the new keyword in front of it.
+        
+        MECHANICS
+            There are other mechanisms in JS that people use to simulate class-orientation:
+
+                function Foo(name) {
+                    this.name = name;
+                }
+
+                Foo.prototype.myName = function() {
+                    return this.name;
+                };
+
+                var a = new Foo( "a" );
+                var b = new Foo( "b" );
+
+                a.myName(); // "a"
+                b.myName(); // "b"
+            
+            This shows two "class-orientation" tricks:
+                1.	this.name = name: adds the .name property onto each object (via 'this' binding with new). Similar to how classes encapsulate data values.
+
+                2.	Foo.prototype.myName = function(){..}: this adds a property (function) to the Foo.prototype object.
+            
+            It's tempting to think that when a and b are created, the properties/functions on the Foo.prototype object are copied over to each of those objects. However, that's not what happens.
+
+            The [[Prototype]] link, provides the fallback lookup steps if a property isn't found directly on an object. So, when a and b are created they both end up with an internal [[Prototype]] linkage to Foo.prototype. When myName isn't found on a or b, it's instead found on Foo.prototype through delegation.
+
+        "CONSTRUCTOR" REDUX
+            Above when we mentioned the .constructor property. The fact that a also gets a .constructor property is just an "accident", an unfortunate confusion. The .constructor reference is also delegated up to Foo.prototype, which happens to have a .constructor pointing at Foo by default.
+
+            There are many problems in the assumption of .constructor meaning "was constructed by". For one, the .constructor property on Foo.prototype is only there by default when Foo is created. If you create a new object, and replace a function's default .prototype object reference, the new objec will not by default get a .constructor property.
+
+                function Foo() { /* .. */ }
+
+                Foo.prototype = { /* .. */ }; // create a new prototype object
+
+                var a1 = new Foo();
+                a1.constructor === Foo; // false!
+                a1.constructor === Object; // true!
+            
+            a1 has no .constructor property, so it delegates up the [[Prototype]] chain to Foo.prototype. But it doesn't have a .constructor either (as it would've had by default), so it keeps delegating up to Object.prototype (the top of the delagtion chain). That object does have a .constructor on it, which points to the built-in Object(..) function.
+
+            Of course, you can add a .constructor property back to Foo.prototype. But this takes a lot of manual work just to "fix" .constructor, just to simulate that constructor means "was constructed by".
+
+                function Foo() { /* .. */ }
+
+                Foo.prototype = { /* .. */ }; // create a new prototype object
+
+                // Need to properly "fix" the missing `.constructor`
+                // property on the new object serving as `Foo.prototype`.
+                // See Chapter 3 for `defineProperty(..)`.
+                Object.defineProperty( Foo.prototype, "constructor" , {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: Foo    // point `.constructor` at `Foo`
+                } );
+            
+            Also, if a .constructor property is found anywhere in the [[Prototype]] chain, it can point to somewhere unexpected. So, a .constructor property is extremely unreliable. Generally, such references should be avoided where possible.
+
+    "(PROTOTYPAL) INHERITANCE"
+        JS "class" approximations would be incomplete if they didnt't have "inheritance".
+
+        We already saw prototypal inheritance at work when a was able to "inherit from" Foo.prototype and get access to myName(). But in JS inheritance is actually delegation, thus an object ("instance")  a1 can delegate to an object Foo.prototype and Bar.prototype can also delegate to Foo.prototype. Rembember in the mental diagram of delegation, the arrows go from right to left and down to up. They are delagation links rather than copy operations.
+
+        This is the typical "prototype style" code that creates the links:
+
+            function Foo(name) {
+                this.name = name;
+            }
+
+            Foo.prototype.myName = function() {
+                return this.name;
+            };
+
+            function Bar(name,label) {
+                Foo.call( this, name );
+                this.label = label;
+            }
+
+            // here, we make a new `Bar.prototype`
+            // linked to `Foo.prototype`
+            Bar.prototype = Object.create( Foo.prototype );
+
+            // Beware! Now `Bar.prototype.constructor` is gone,
+            // and might need to be manually "fixed" if you're
+            // in the habit of relying on such properties!
+
+            Bar.prototype.myLabel = function() {
+                return this.label;
+            };
+
+            var a = new Bar( "a", "obj a" );
+
+            a.myName(); // "a"
+            a.myLabel(); // "obj a"
+        
+        The important part is Bar.prototype = Object.create(Foo.prototype). When Bar() is declared, Bar, like any other function has a .prototype link to it's default object. But we want that link to be to Foo.prototype, so we create a new object with Object.create(..) that is linked as we want.
+
+        There are some confusions that other approches would also work:
+
+            Bar.prototype = Foo.prototype
+
+            This doesn't create a new object for Bar.prototype to be linked to, it just links Bar to the same object as Foo which is Foo.prototype. So when you start assigning like Bar.prototype.myLabel =..., you're not modyfing a separate object but the shared Foo.prototype object.
+        
+            Bar.prototype = new Foo();
+
+            This does create a new object that is linked to Foo.prototype. But, it uses the Foo() constructor call, so if that function has any side-effects (such as logging, changing state, adding data properties to this, etc.), those side effects happen at the time of this linking (and likely against the wrong object) rather than only when the eventual Bar() descendants are created.
+        
+        Prior to ES6, the only way to properly link the .prototype properties was Object.create(..) but it creates a new object, throwing the old one away instead of modyfying the existing default object. ES6 adds a Object.setPrototypeOf(..) helper utility, which does the trick.
+
+            //Pre-ES6, throws away the default Bar.prototype
+            Bar.prototype = Object.create(Foo.prototype);
+            //ES6, modifes the existing Bar.prototype
+            Object.setPrototypeOf(Bar.prototype, Foo.prototype);
+        
+        INSPECTING "CLASS" RELATIONSHIPS
+            Inspecting an instance (an object in JS) for it's inheritance ancestry (delegation linkage in JS) is often called introspection in traditional class-oriented environments.
+
+                function Foo() {
+                    // ...
+                }
+
+                Foo.prototype.blah = ...;
+
+                var a = new Foo();
+                
+            The first approach to introspect a to find out it's ancestry, embraces the "class" confusion:
+
+                a instanceof Foo; // true
+
+            The instanceof operator takes a plain object as it's left-hand oprand and a function as it's right-hand operand. The question instanceof answers is: in the entire [[Prototype]] chain of a, does the object arbitrarily pointed to by Foo.prototype ever appear?
+
+            But this means taht you can only inspect the ancestry of some object (a) if you have a function (Foo with it's .prototype refernce) to test with. You cant't use instanceof to find out if two objects are related through a [[Prototype]] chain. You would need to create a utility function to do so:
+            
+                function isRelatedTo(o1, o2) {
+                    function F(){}
+                    F.prototype = o2;
+                    return o1 instanceof F;
+                }
+
+                var a = {};
+                var b = Object.create( a );
+
+                isRelatedTo( b, a ); // true
+            
+            The second, and much cleaner,  approach is:
+
+                Foo.prototype.isPrototypeOf( a ); // true
+            
+            In this case we just need an object (in our case, arbitrarily labeled Foo.prototype) to test against another object. isPrototypeOf(..) still answers the same question as instanceof but we don't need the indirection of referencing a function whose .prototype will automatically be consulted. Basicallly the isRelatedTo(..) utility is built-in to the language.
+
+            We can also directly retrieve the [[Prototype]] of an object:
+
+                Object.getPrototypeOf(a);
+                Object.getPrototypeOf( a ) === Foo.prototype; // true
+
+            Most browsers support a non-standard way of accessing the internal [[Prototype]], refered to as the "dunder (double underscore) proto":
+
+                a.__proto__ === Foo.prototype; // true
+            
+            The .__proto__ property (standardized until ES6) "magically" retrieves the internal [[Prototype]] of an object as a reference, which is helpful if you want to directly inspect (or even traverse: .__proto__.__proto__...) the chain.
+
+            Just as with .constructor, .__proto__ doesn't actually exist on the object you're inspecting. It exists (non-enumerable) on the built-in Object.prototype, along with other common utilises.
+
+            Moreover, .__proto__ looks like a property but it's actually more appropriate to think of it as a getter/setter. Envisioned liked this:
+
+                Object.defineProperty( Object.prototype, "__proto__", {
+                    get: function() {
+                        return Object.getPrototypeOf( this );
+                    },
+                    set: function(o) {
+                        // setPrototypeOf(..) as of ES6
+                        Object.setPrototypeOf( this, o );
+                        return o;
+                    }
+                } );
+            
+            The getter has a as it's 'this' even though the getter function exists on the Object.prototype object, so it's just like saying Object.getPrototypeOf(a).
+
+            .__proto__ is also a settable property, just like ES6's Object.setPrototypeOf(..). However, generally you should not change the [[Prototype]] of an existing object.
+    
+    OBJECT LINKS
+        Now that we've seen all the trouble people go throught to make "classes" work in JS, we can see why Object.create(..) is so useful.
+
+            var foo = {
+                something: function() {
+                    console.log( "Tell me something good..." );
+                }
+            };
+
+            var bar = Object.create( foo );
+            bar.something(); // Tell me something good...
+        
+        Object.create(..) creates a new object (bar) linked to the object we specified (foo), which gives us all the delagation of the [[Prototype]] mechanism but without any of the unnecessary complication of 'new' funcions acting as classes and constructor calls, confusing .prototype and .constructor references, or any of the extra stuff. We don't need classes to create relationships between two objects, we just need the objects linked together for delagation, and Object.create(..) gives us that linkage without the classes cruft.
+
+        Object.create(null) creates an object that has an empty (null) [[Prototype]] linkage, so the object can't delegate anywhere. These objects are often called "dictionaries" since they are tipically used purely for storing data in properties, mostly because they have no possible surprise effects from any delegated properties/functions on the [[Prototype]] chain.
+
+    EXPLICIT API
+        Designing software where you intend for a developer to call a function that is not directly on the object but it is found in the [[Prototype]] chain can make the API design confusing for future developers to maintain the software.
+
+        So you can make delegation less confusing by using an internal delegation:
+
+            var anotherObject = {
+                cool: function() {
+                    console.log( "cool!" );
+                }
+            };
+
+            var myObject = Object.create( anotherObject );
+
+            myObject.doCool = function() {
+                this.cool(); // internal delegation!
+            };
+
+            myObject.doCool(); // "cool!"
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+BEHAVIOR DELEGATION
+
+    TOWARDS DELEGATION-ORIENTED DESGIN
+        In JS it's better to change our thinking from the class/inheritance design pattern to the behavior delegation design pattern.
+
+    CLASS THEORY
+        With classes, the way we design the scenario is: define a general parent (base) class like Task, defining shared behavior for all the alike classes. Then, you define child classes XYZ and ABC, both of which inherit from Task, and each of which adds specialized behavior, even overrading (polymorphism) the definition of some general Task method.
+
+            class Task {
+                id;
+
+                // constructor `Task()`
+                Task(ID) { id = ID; }
+                outputTask() { output( id ); }
+            }
+
+            class XYZ inherits Task {
+                label;
+
+                // constructor `XYZ()`
+                XYZ(ID,Label) { super( ID ); label = Label; }
+                outputTask() { super(); output( label ); }
+            }
+
+            class ABC inherits Task {
+                // ...
+            }
+
+        Now you can instantiate one or more copies of the XYZ and ABC child classes. Those instances have copies both of the general Task behavior as well as the specific XYZ/ABC behavior.
+    
+    DELEGATION THEORY
+        Now let's try the same problem using behavior delegation.
+
+        First you'll define an object (not a class or function) called Task, and it will contain behavior that includes utility methods that various tasks can use (delegate to). Then, for each task (XYZ, ABC) you define an object to hold that task specific behavior. And finally you link the task-specific object(s) to the Task utility object, allowing them to delegate to it when they need to.
+
+            var Task = {
+                setID: function(ID) { this.id = ID; },
+                outputID: function() { console.log( this.id ); }
+            };
+
+            // make `XYZ` delegate to `Task`
+            var XYZ = Object.create( Task );
+
+            XYZ.prepareTask = function(ID,Label) {
+                this.setID( ID );
+                this.label = Label;
+            };
+
+            XYZ.outputTaskDetails = function() {
+                this.outputID();
+                console.log( this.label );
+            };
+
+            // ABC = Object.create( Task );
+            // ABC ... = ...
+    
+        We can call this style of code "OLOO" (Object Linked to Other Objects). In JS, the [[Prototype]] mechanism links objects to other objects. There are no abstact mechanisms like classes, no matter how much we try. All we care about is that XYZ object delegates to the Task object.
+
+        Some other differences:
+            1.	Both id and label data members from the OLOO example are data properties directly on XYZ (neither is on Task). In general, with [[Prototype]] delegation involved, you want state to be on the delagators (XYZ, ABC), not on the delegate (Task).
+            2.	With the class design pattern, we intentionally named outputTask the same on both the parent and child, so that we could employ polymorphism. In behavior delegation, we do the opposite, we avoid naming things the same at different levels of the [[Prototype]] chain (shadowing) because having those name collisions can make harder to understand/mantain code.
+            3.	this.setID(ID); inside of a method on the XYZ object first looks on XYZ for setId(..), but since it doesn't find it on XYZ, [[Prototype]] delegation means it can follow the link to Task to look for setID(..), which it finds. Moreover, because of implicit call-site 'this' binding rules, when setID(..) runs, even though the method was found on Task, the 'thhis' binding for that function calls is XYZ.
+        
+        In other words, behavior delegation means: let some object (XYZ) provide a delegation (to task) for property or method references not found on the object (XYZ).
+    
+        MUTUAL DELEGATION (DISALLOWED)
+            You can't create a cycle where two or more objects are mutually delegated to each other. If you made a reference to a property/method not present in either of those, you'd have an infinite recursion of the [[Prototype]] chain. But if all references were strictly present, then you could use either object to delegate to the other.
+
+            But it's disallowed because engine implementators have observed that it's more performant to check for (and reject) the infinite circular refernce once at set-time, rather than needing to have the performance hit of that guard check every time you look-up a property on an object.
+    
+    MENTAL MODELS COMPARED
+        We'll examine some code and compare both ways (OO vs. OLOO) of implementing the code.
+
+            //OO
+            function Foo(who) {
+                this.me = who;
+            }
+            Foo.prototype.identify = function() {
+                return "I am " + this.me;
+            };
+
+            function Bar(who) {
+                Foo.call( this, who );
+            }
+            Bar.prototype = Object.create( Foo.prototype );
+
+            Bar.prototype.speak = function() {
+                alert( "Hello, " + this.identify() + "." );
+            };
+
+            var b1 = new Bar( "b1" );
+            var b2 = new Bar( "b2" );
+
+            b1.speak();
+            b2.speak();
+
+            Parent class Foo, inherited by child class Bar, which is then instantiated twice as b1 and b2. And b1 delegates to Bar.prototype which delegates to Foo.prototype.
+
+            //OLOO
+            var Foo = {
+                init: function(who) {
+                    this.me = who;
+                },
+                identify: function() {
+                    return "I am " + this.me;
+                }
+            };
+
+            var Bar = Object.create( Foo );
+
+            Bar.speak = function() {
+                alert( "Hello, " + this.identify() + "." );
+            };
+
+            var b1 = Object.create( Bar );
+            b1.init( "b1" );
+            var b2 = Object.create( Bar );
+            b2.init( "b2" );
+
+            b1.speak();
+            b2.speak();
+
+            We take exactly the same advantage of [[Prototype]] delegation from b1 to Bar to Foo as we did in the previous snippet. We still have 3 objects linked together, but we've greatly simplified all the other stuff going on, because now we just set up objects linked to each other. Withouth needing all the things that look but don't behave like classes (constructors, prototypes and new calls).
+
+            Also notice that what was just one call (var b1 = new Bar(..)) is now two calls (var b1 = Object.create(Bar) and b1.init(..)). This is a pro of OLOO, since it allows you to create and initialize in different operations, as opposed to OO which strongly suggests to do then in the same step.
+
+            If you think of the Widget/Button example (Widget with common base behavior and Button as a specific widget type), with OLOO you don't think of Widget as a parent and Button as a child. Rather, Widget is just an object and is sor of a utility collection that any specific type of widget might want to delegate to, and Button is just another object, with a delegation link to Widget.
+
+            Composition is when you have a parent class and two child classes and you want both child classes to interact between them. You could be tempted to make one child class inherit from the other child class but this makes little sense since they are not specializing base behavior. Instead you add an instance of the child class as a data property of the other child class.
+
+            As you can see, with OLOO you don't need an extra entity just to share behavior between them, because delegation is powerful enough. You also don't need to instantiate your classes to work with them, because ther are no classes, just the objects themselves. Furthermore, there's no need for composition as delegation gives the two objects the ability to cooperate differentially as needed. Lastly, you avoid the polymorphism pitfalls by not having function names be the same on both objects, you just called them sligthly different/more descriptive for their specific tasks.
+
+            Bottom line, you end up with the same functionality but simpler design.
+
+            For more examples of OO vs. OLOO refer to: https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch6.md#classes-vs-objects
+    
+    NICER SYNTAX
+        One of the nicer things of ES6's 'class' is the short-hand syntax for declaring class methods:
+
+            class Foo {
+                methodName() { /* .. */ }
+            }
+        
+        As of ES6, you can use concise method declaration in any object literal:
+
+            var LoginController = {
+                errors: [],
+                getUser() { // Look ma, no `function`!
+                    // ...
+                },
+                getPassword() {
+                    // ...
+                }
+                // ...
+            };
+        
+        Moreover, you no longer need to link the objects thorugh delegation and then assign properties individaully and not using an object literal. You can just use concise methods and then modify that object's [[Prototype]] with Object.setPrototypeOf(..):
+
+            // use nicer object literal syntax w/ concise methods!
+            var AuthController = {
+                errors: [],
+                checkAuth() {
+                    // ...
+                },
+                server(url,data) {
+                    // ...
+                }
+                // ...
+            };
+
+            // NOW, link `AuthController` to delegate to `LoginController`
+            Object.setPrototypeOf( AuthController, LoginController );
+
+    UNLEXICAL
+        There's one drawback to concise methods, consider:
+
+            var Foo = {
+                bar() { /*..*/ },
+                baz: function baz() { /*..*/ }
+            };
+        
+        Here's the syntactic de-sugaring that expresses how that code will operate:
+
+            var Foo = {
+                bar: function() { /*..*/ },
+                baz: function baz() { /*..*/ }
+            };
+        
+        The bar() short-hand became an anonymous function expression attached to the bar property, because the function object itself has no name identifier. As we had seen before, there are three main downsides to anonymous function expressions:
+
+            1.	Makes debugging stack traces harder.
+            2.	Makes self-referencing(recursion, event (un)binding, etc.) harder.
+            3.	Makes code (a little bit) harder to understand.
+
+        1 and 3 don't apply to concise methods. Even though anonymous function expres normally don't have a name in stack traces, concise methods are specified to set the internal name property of the function object accordingly.
+
+        2 is the drawback. Concise methods will not have a lexical identifier to use as a self-reference:
+
+            var Foo = {
+                bar: function(x) {  
+                    if (x < 10) {
+                        return Foo.bar( x * 2 );
+                    }
+                    return x;
+                },
+                baz: function baz(x) {
+                    if (x < 10) {
+                        return baz( x * 2 );
+                    }
+                    return x;
+                }
+            };
+        
+        The manual Foo.bar(x*2) reference suffices in this example, but there are many cases where a function wouldn't be able to do that, such as when the function is being shared in delegation across objects, using 'this' binding. In this case you would want to forgo the concise method syntax in favor of the manual named function expression form: bar: function bar(){..}.
+    
+    INTROSPECTION
+        Type intorspection refers to inspecting an instance to find out what kind of object it is. It's primary goal with class instances is to reason about the structure/capabilites of the object based on how it was created.
+
+            function Foo() {
+                // ...
+            }
+            Foo.prototype.something = function(){
+                // ...
+            }
+
+            var a1 = new Foo();
+
+            // later
+
+            if (a1 instanceof Foo) {
+                a1.something();
+            }
+        
+        Because Foo.prototype (not Foo) is in the [[Prototype]] chain of a1, the instanceof operator confusingly pretends to tell us that a1 is an instance of the Foo "class". With this knowledge, we assume that a1 has the capabilites described by the Foo "class".
+
+        Of course, there's no Foo class, only a plain old function Foo. By it's syntax, instanceof pretends to be inspecting the relationship between a1 and Foo, but it's actually telling us wether a1 and Foo.prototype are related.
+
+        Recall the abstract example from earlier (abbreviated):
+
+            function Foo() { /* .. */ }
+            Foo.prototype...
+
+            function Bar() { /* .. */ }
+            Bar.prototype = Object.create( Foo.prototype );
+
+            var b1 = new Bar( "b1" );
+        
+        For type introspection purposes on the entities in that example, using instanceof and .prototype semantics, here are the various checks you might need to perform:
+
+            // relating `Foo` and `Bar` to each other
+            Bar.prototype instanceof Foo; // true
+            Object.getPrototypeOf( Bar.prototype ) === Foo.prototype; // true
+            Foo.prototype.isPrototypeOf( Bar.prototype ); // true
+
+            // relating `b1` to both `Foo` and `Bar`
+            b1 instanceof Foo; // true
+            b1 instanceof Bar; // true
+            Object.getPrototypeOf( b1 ) === Bar.prototype; // true
+            Foo.prototype.isPrototypeOf( b1 ); // true
+            Bar.prototype.isPrototypeOf( b1 ); // true
+        
+        Intuitively (with classes) you might want to say something like Bar instanceof Foo, but that's not valid in JS. You have to do Bar.prototype instanceof Foo.
+
+        Another common pattern for type introspection, which many prefer over instanceof, is called "duck typing". It comes from the adage "if it looks like a duck, and it quacks like a duck, it must be a duck":
+
+            if (a1.something) {
+                a1.something();
+            }
+        
+        Rather than inspecting for a relationship between aq and an object that holds the delegatble something() function, we assume that the test for a1.something passing means a1 has the capability to call .something(), regardless of if it is found directly on a1 or delegated.
+
+        The risk of "duck typing" is when it's extended to make other assumptions about the object's capabilities. One example is ES6 Promises, for several reasons there's a need to determine if any arbitrary object reference is a Promise, but the way that test is done is to check if the object happens to have a then() function. If it does, ES6 Promises will assume that the object is "thenable" and will also expect it to behave conformantly to all standar behaviors of Promises. You should keep away from ES6 Promise mechanism any non-Promise object that happens to have a then() method on it.
+
+        Turning our attention back to OLOO, type introspection turns out to be much cleaner. Again:
+
+            var Foo = { /* .. */ };
+
+            var Bar = Object.create( Foo );
+            Bar...
+
+            var b1 = Object.create( Bar );
+        
+        Using OLOO approach, here's the type introspection we might use:
+
+            // relating `Foo` and `Bar` to each other
+            Foo.isPrototypeOf( Bar ); // true
+            Object.getPrototypeOf( Bar ) === Foo; // true
+
+            // relating `b1` to both `Foo` and `Bar`
+            Foo.isPrototypeOf( b1 ); // true
+            Bar.isPrototypeOf( b1 ); // true
+            Object.getPrototypeOf( b1 ) === Bar; // true
+        
+        We're not using instanceof anymore, because it's confusingly pretending to have something to do with classes. Now, we just ask "are you a prototype of me?". There's no more indirection necessary with stuff like Foo.prototype or Foo.prototype.isPrototypeOf(..).
+    
+    ES6 CLASSES
+      The awkwardness of classes in JS is not just about syntax, although that's a big part of it. It includes the verbosity of .prototype references, trying to implement polymorphism and .constructor being wrongly interpreted.
+
+      ES6 introduces a new class mechanism, revisiting the Widget/Button example now with ES6 classes:
+
+        class Widget {
+          constructor(width,height) {
+            this.width = width || 50;
+            this.height = height || 50;
+            this.$elem = null;
+          }
+          render($where){
+            if (this.$elem) {
+              this.$elem.css( {
+                width: this.width + "px",
+                height: this.height + "px"
+              } ).appendTo( $where );
+            }
+          }
+        }
+
+        class Button extends Widget {
+          constructor(width,height,label) {
+            super( width, height );
+            this.label = label || "Default";
+            this.$elem = $( "<button>" ).text( this.label );
+          }
+          render($where) {
+            super.render( $where );
+            this.$elem.click( this.onClick.bind( this ) );
+          }
+          onClick(evt) {
+            console.log( "Button '" + this.label + "' clicked!" );
+          }
+        }
+      
+      Beyond the syntax being nicer, what problems does ES6 solve?
+
+        1.  There's no more (sorta, see below) references to .prototype cluttering the code.
+        2.  Button is declared directly to "inherit from" (aka extends) Widget, instead of needing to use Object.create(..) to replace a .prototype object that's linked, or having to set with .__proto__ or Object.setPrototypeOf(..).
+        3.  super(..) now gives us a very helpful relative polymorphism, so that any method at one level of the prototype chain can refer relatively one level up to the method of the same name. This solves the weirdness of constructors not belonging to their class, super() works inside constructors as expected.
+        4.  class literal syntax has no affordance for specifying properties (only methods).
+        5.  extends lets you extend even built-in object (sub)types, like Array or RegExp.
+      
+      Those are some substantial solutions to many of the most obvious syntactic issues.
+    
+      CLASS GOTCHAS
+        The new class syntax doesn't mean there's a new class mechanism in JS as of ES6. class is, mostly, just syntactic sugar on top of the existing [[Prototype]] (delegation) mechanism.
+
+        That means class is not actually copying definitions statically at declaration time the way it does in traditional class-oriented languages. If you change/replace a method on the "parent class", the "child class", the "child class" and/or instances will still be affected, in that they don't get copies at declaration time, they are still using the live-delegation model based on [[Prototype]]:
+
+          class C {
+            constructor() {
+              this.num = Math.random();
+            }
+            rand() {
+              console.log( "Random: " + this.num );
+            }
+          }
+
+          var c1 = new C();
+          c1.rand(); // "Random: 0.4324299..."
+
+          C.prototype.rand = function() {
+            console.log( "Random: " + Math.round( this.num * 1000 ));
+          };
+
+          var c2 = new C();
+          c2.rand(); // "Random: 867"
+
+          c1.rand(); // "Random: 432" -- oops!!!
+        
+        Thhis only seems reasonable knowing already about the delagation nature of things.
+
+        class syntax doesn't provide a way to declare class member properties (only methods). So if you need to do that to track shared state among instances, then you end up going back to the ugly .prototype syntax:
+
+          class C {
+            constructor() {
+              // make sure to modify the shared state,
+              // not set a shadowed property on the
+              // instances!
+              C.prototype.count++;
+
+              // here, `this.count` works as expected
+              // via delegation
+              console.log( "Hello: " + this.count );
+            }
+          }
+
+          // add a property for shared state directly to
+          // prototype object
+          C.prototype.count = 0;
+
+          var c1 = new C();
+          // Hello: 1
+
+          var c2 = new C();
+          // Hello: 2
+
+          c1.count === 2; // true
+          c1.count === c2.count; // true
+        
+        The biggest problem is that it betrays the class syntax by exposing .prototype as an implementation detail. We also have the suprise problem that this.count++ would implicitly create a separate shadowed .count property on both c1 and c2 objects, rather than updating the shared state. Moreover, accidental shadowing is still a hazard:
+
+          class C {
+            constructor(id) {
+              // oops, gotcha, we're shadowing `id()` method
+              // with a property value on the instance
+              this.id = id;
+            }
+            id() {
+              console.log( "Id: " + this.id );
+            }
+          }
+
+          var c1 = new C( "c1" );
+          c1.id(); // TypeError -- `c1.id` is now the string "c1"
+        
+        There's alos some very subtle nuanced issues with how super works. You might assume that super would be band in a way to how 'this' gets bound, which is that super would always be bound to one level higher than whatever the current method's position in the [[Prototype]] chain is.
+
+        If you, like most JS devs, start assigning functions around to different objects (which came from class definitions) in various different ways, you probably won't be very aware that in all those cases, the super mechanism is having to be re-bound each time. And depending on what sorts of syntactic approaches you take to these assignments, there may very well be cases where the super can't be property bound.
+
+        Consider what super should do here against D and E:
+          class P {
+            foo() { console.log( "P.foo" ); }
+          }
+
+          class C extends P {
+            foo() {
+              super();
+            }
+          }
+
+          var c1 = new C();
+          c1.foo(); // "P.foo"
+
+          var D = {
+            foo: function() { console.log( "D.foo" ); }
+          };
+
+          var E = {
+            foo: C.prototype.foo
+          };
+
+          // Link E to D for delegation
+          Object.setPrototypeOf( E, D );
+
+          E.foo(); // "P.foo"
+        
+        If you were thinking that super would be bound dynamically at call-time, you might expect that super() would automatically recognize that E delegates to D, so E.foo() using super() should call to D.foo().
+
+        But for performance reasons, super is not late bound (dynamically bound) like 'this' is. Instead it's derived at call-time from [[HomeObject]].[[Prototype]], where [[HomeObject]] is statically bound at creation time. So in this case, super() is still resolving to P.foo(), since the method's [[HomeObject]] is still C and C.[[Prototype]] is P.
+      
+      STATIC > DYNAMIC?
+        The biggest problem of all about ES6 class is that all these various gotchas mean class sorta opts you into a syntax which seems to imply (like traditional classes) that once you declare a class, it's static definition of a thing. You completely lose sight of the fact that C is an object, which you can directly interact with.
+
+        In traditional class-oriented languages, you never adjust the definition of a clas later, so the class design pattern doesn't suggest such capabilites. But one of the most powerful parts of JS is that it is dynamic, and the definition of any object is (unless you make it inmutable) a fluid and mutable thing.
+
+        class seems to imply you shouldn't do such things, by forcing you into the uglier .prototype syntax to do so, or forcing you to thinkg about all these class gotchas. In other words, it's as if class is telling you: "dynamic is too hard, so it's probably not a good idea. Here's a static-looking syntax, so code your stuff statically".
+
+        These are the reasons why ES6 class is actually hiding many of the problems with the class/inheritance design pattern in JS, and introduces other subtle but dangerous problems.
+
+        Note: If you use the .bind(..) utility to make a hard-bound function, the function created is not sublclassable with ES6 extend like normal functions are.
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+TYPES
+  A type is an intrinsic, built-in set of characteristics that uniquely identifies the behavior of a particular value and distinguishes it from other values, both to the engine and to the developer.
+
+  In other words, if both the engine and the developer treat the value 42 (number) differently than they treat value "42" (string), then those two values have different types.
+
+  Some people say JS shouldn't claim to have "types", since they don't mean the same as in other languages. But this definition is consisten with how JS describes itself.
+
+  A TYPE BY ANY OTHER NAME...
+    Having a proper understanding of each type and its intrinsic behavior is absolutely essential to understanding how to properly convert values to different types (Coercion).
+
+    But there are many different ways that such coercion can happen. Some are explicit, easy to reason about and reliable. But if you aren't careful, coercion can happen in very strange and surprising ways.
+
+    Coercion confusion is perhaps one of the most profound frustrations for JS developers.
+
+    BUILT-IN TYPES
+      JS defines seven built-in types:
+        - null
+        - undefined
+        - boolean
+        - number
+        - string
+        - object
+        - symbol (added in ES6)
+      
+      All of these types except object are called "primitives".
+
+      The typeof operator inspects the type of the given value, and always returns one of seven string values. Surprisingly, there's not an exact 1-to-1 match with the seven built-in types we just listed.
+
+        typeof undefined     === "undefined"; // true
+        typeof true          === "boolean";   // true
+        typeof 42            === "number";    // true
+        typeof "42"          === "string";    // true
+        typeof { life: 42 }  === "object";    // true
+
+        // added in ES6!
+        typeof Symbol()      === "symbol";    // true
+
+      As you may have noticed, null was excluded from the above listing. It's special, in the sense that it's buggy when used with typeof:
+
+        typeof null === "object"; // true
+
+      It would have been nice and correct if it returned "null", but this bug in JS has persisted for a long time, and if it were to be fixed it could break a lot of web software.
+
+      If you want to test for a null value using its type, you need a compound condition:
+
+        var a = null;
+        (!a && typeof a === "object"); // true
+      
+      null is the only primitive value that is "falsy" (aka false-like) but that also returns "object" from the typeof check.
+
+      So what's the seventh string value that typeof can return?
+
+        typeof function a(){ /* .. */ } === "function"; // true
+
+      It's easy to think that function would be a top-level built-in type in JS, especially given this behavior of typeof. However, if you read the spec, you'll see it's actually a "subtype" of object. Specifically, a function is referred to as a "callable object", an object that has an internal [[Call]] property that allows it to be invoked.
+
+      The fact that functions are actually objects is quite useful. Most importantly, they can have properties. For example, they have a length property set to the number of formal parameters it is declared with:
+
+        function a(b,c) {
+          /* .. */
+        }
+
+        a.length; // 2
+
+      What about arrays? They're native to JS, so are they a special type?
+
+        typeof [1,2,3] === "object"; // true
+
+      Nope, just objects. It's most appropriate to think of them also as a "subtype" of object, in this case with the additional characteristics of being numerically indexed (as opposed to just being string-keyed like plain objects) and maintaining an automatically updated .length property.
+    
+    VALUES AS TYPES
+      In JS, variables don't have types, values have types. Variables can hold any value, at any time.
+
+      Another way to think about JS types is that JS doesn't have "type enforcement", in that the engine doesn't insist that a variable always holds values of the same initial type that it starts out with.
+
+      If you use typeof against a variable, it's not asking "whats' the type of the variable?" as it may seem, since JS variables have no types. Instead, it's asking "what's the type of the value in the variable?".
+
+        var a = 42;
+        typeof a; // "number"
+
+        a = true;
+        typeof a; // "boolean"
+      
+      UNDEFINED VS "UNDECLARED"
+        Variables that have no value currently, actually have the undefined value. Calling typeof against such variables will return "undefined":
+
+          var a;
+
+          typeof a; // "undefined"
+
+          var b = 42;
+          var c;
+
+          // later
+          b = c;
+
+          typeof b; // "undefined"
+          typeof c; // "undefined"
+        
+        It's thempting for most developers to think of the word "undefined" and think of it as a synonym for "undeclared". However, in JS these two concepts are quite different. An "undefined" variable is one that has been declared in the accessible scope, but at the moment has no other value in it. And "undeclared" variable is one that has not been formally declared in the accessible scope.
+
+          var a;
+
+          a; // undefined
+          b; // ReferenceError: b is not defined
+        
+        An annoying confusion is the error message that browsers assign to this condition, "... is not defined" is not to be confused with "undefined". It'd be nice if they said something like "b is not declared".
+
+        There's also a special behavior associated with typeof as it relates to undeclared variables that even further reinforces the confusion:
+
+          var a;
+
+          typeof a; // "undefined"
+
+          typeof b; // "undefined"
+        
+        The typeof operator returns "undefined" even for "undeclared" variables. Notice there was no error thrown when we executed typeof b, even though b is an undeclared variable. This is a special safety guard in the behavior of typeof.
+
+      TYPEOF UNDECLARED
+        Nevertheless, this safety guard is a useful feature when dealing with JS in th browser, where multiple script files can load variables into the shared global namespace.
+
+        As a simple example, imagine having a "debug mode" in your program that is controlled by a global variable (flag) called DEBUG. You'd want to check if the variable was declared before performing a debug task like logging a message to the console. A top-level global var DEBUG = true declaration would only be included in a "debug.js" file, which you only load into the browser when you're in development/testing, but not in production.
+
+        However, you have to take care in how you check for the global DEBUG variable in the rest of your applicaton code, so that you don't throw a ReferenceError. The safety guard on typeof is our friend in this case:
+
+          // oops, this would throw an error!
+          if (DEBUG) {
+            console.log( "Debugging is starting" );
+          }
+
+          // this is a safe existence check
+          if (typeof DEBUG !== "undefined") {
+            console.log( "Debugging is starting" );
+          }
+        
+        This sort of check is useful even if you're not dealing with user-defined variables (like DEBUG). If you are doing a feature check for a built-in API, you may also find it helpful:
+
+          if (typeof atob === "undefined") {
+            atob = function() { /*..*/ };
+          }
+        
+        Note: If you're defining a polyfill for a feature if it doesn't already exist, you probably want to avoid using var to make the atob declaration. If you declare var atob inside the if statement, this declaration is hoisted to the top of the scope, even if the if condition doesn't pass.
+
+        Another way of doing these checks against global variables but without the safety guard feature of typeof is to observe that all global variables are also properties of the global object, which in the browser is basically the window object:
+
+          if (window.DEBUG) {
+            // ..
+          }
+
+          if (!window.atob) {
+            // ..
+          }
+        
+        Unlike referencing undelcared variables, there is no ReferenceError thrown if you try to access an object property that doesn't exist. On the other hand, manually referencing the global variable with a window reference is something some developers prefer to avoid, especially if your code needs to run in multiple JS enviroments.
+
+VALUES
+  array's, string's and number's are the most basic building-blocks of any program, but JS has some unique characteristics with these types.
+
+  ARRAYS
+    JS array's are just containers for any type of value, from string to number to object to even another array.
+
+      var a = [ 1, "2", [3] ];
+
+      a.length;		// 3
+      a[0] === 1;		// true
+      a[2][0] === 3;	// true
+    
+    You can also just declare an array and add values as you see fit:
+
+      var a = [ ];
+
+      a.length;	// 0
+
+      a[0] = 1;
+      a[1] = "2";
+      a[2] = [ 3 ];
+
+      a.length;	// 3
+
+    Warning: Using delete on an array value will remove the slot from the array, but even if you remove all the elements, it does not update the length property.
+
+    Be careful about creating "sparse" arrays:
+
+      var a = [ ];
+
+      a[0] = 1;
+      // no `a[1]` slot set here
+      a[2] = [ 3 ];
+
+      a[1];		// undefined
+
+      a.length;	// 3
+    
+    While that works, it can lead to some confusing behavior with the empty slots you leave in between. While the slot appears to have the undefined value in it, it will not behave the same as if the slot is explicitly set (a[1] = undefined).
+
+    arrays are numerically indexed, but the tricky thing is that they also are objects that can have string key/properties added to them (but don't count towrad the length):
+
+      var a = [ ];
+
+      a[0] = 1;
+      a["foobar"] = 2;
+
+      a.length;		// 1
+      a["foobar"];	// 2
+      a.foobar;		// 2
+    
+    However, a gotcha to be aware of is that if a string intended as a key can be coerced to a number, then it is assumed that you wanted to use it as a number index.
+
+      var a = [ ];
+
+      a["13"] = 42;
+
+      a.length; // 14
+    
+    Generally, it's not a great idea to add string key/properties to arrays, use objects instead.
+  
+    ARRAY-LIKES
+      There will be occasions where you need to convert an array-like value (a numerically indexed collection of values) into a true array, usually so you can call array utilities (like indexOf(..), concat(..), forEach(..), etc.) against the collection of values.
+
+      For exapmle, various DOM query operations return lists of DOM elements that are not true arrays but are array-like enough for our conversion. Or when functions expose the arguments (array-like) object (as of ES6, deprecated) to access the arguments as a list.
+
+      One very common way to make such a conversion is to borrow the slice(..) utility against the value:
+
+        function foo() {
+          var arr = Array.prototype.slice.call( arguments );
+          arr.push( "bam" );
+          console.log( arr );
+        }
+
+        foo( "bar", "baz" ); // ["bar","baz","bam"]
+      
+      If slice() is called without any other parameters, it has the effect of duplicating the array (or array-like).
+
+      As of ES6, there's also a built-in utility called Array.from(..) that can do the same task:
+
+        var arr = Array.from( arguments );
+      
+  STRINGS
+    It's very common belief that strings are essentially just arrays of characters. It's important to realize that JS strings are really not the same as arrays of characters. This similarity is mostly just skin-deep.
+
+    For example, let's consider these two values:
+
+      var a = "foo";
+      var b = ["f","o","o"];
+    
+    Strings do have a shallow resemblance to arrays, for instance, both of them have a length property, an indexOf(..) method (array version only as of ES5) and a concat(..) method:
+
+      a.length;							// 3
+      b.length;							// 3
+
+      a.indexOf( "o" );					// 1
+      b.indexOf( "o" );					// 1
+
+      var c = a.concat( "bar" );			// "foobar"
+      var d = b.concat( ["b","a","r"] );	// ["f","o","o","b","a","r"]
+
+      a === c;							// false
+      b === d;							// false
+
+      a;									// "foo"
+      b;									// ["f","o","o"]
+    
+    But JS strings are immutable, while arrays are mutable:
+      a[1] = "O";
+      b[1] = "O";
+
+      a; // "foo"
+      b; // ["f","O","o"]
+
+    Moreover, the a[1] character position access form was not always valid JS. Instead, the correct approach has been a.charAt(1).
+
+    A further consequence of immutable strings is that none of the string methods that alter its contents can modify in-place, but rather must create and return new strings. By contrast, many array methods do modify in-place.
+
+      c = a.toUpperCase();
+      a === c;	// false
+      a;			// "foo"
+      c;			// "FOO"
+
+      b.push( "!" );
+      b;			// ["f","O","o","!"]
+    
+    Also, many of the array methods that could be helpful when dealing with strings are not available for them, but we can "borrow" non-mutation array methods:
+
+      a.join;			// undefined
+      a.map;			// undefined
+
+      var c = Array.prototype.join.call( a, "-" );
+      var d = Array.prototype.map.call( a, function(v){
+        return v.toUpperCase() + ".";
+      } ).join( "" );
+
+      c;				// "f-o-o"
+      d;				// "F.O.O."
+    
+    Another example, reversing a string. arrays have a reverse() in-place mutator method, but strings do not:
+
+      a.reverse;		// undefined
+      Array.prototype.reverse.call( a );
+      // still returns a String object wrapper (see next chapter)
+      // for "foo" :(
+
+      b.reverse();	// ["!","o","O","f"]
+      b;				// ["!","o","O","f"]
+    
+    Unfortunately, this "borrowing" doesn't work with array mutators, because strings are immutable and can't be modified in place. Another workaround is to convert the string into an array, perfom the desired operation, then convert it back to string.
+
+      var c = a
+        // split `a` into an array of characters
+        .split( "" )
+        // reverse the array of characters
+        .reverse()
+        // join the array of characters back to a string
+        .join( "" );
+
+      c; // "oof"
+    
+    Warning: Be careful! This approach doesn't work for strings with complex (unicode) characters in them (astral symbols, multibyte characters, etc.).
+
+    The other way to look at this is: if you are more commonly doing tasks on your strings that treat them as basically arrays of characters, perhaps it's beter to just store them as arrays. You can alwasy call join("") on the array when you need the string representation.
+
+  NUMBERS
+    JS has just one numeric type: number. This type includes both "integer" values and the fractional decimal numbers. In JS, an "integer" is just a value that has no fractional value. That is, 42.0 is as much an "integer" as 42.
+
+    Like most modern languages, the implementation of JS's numbers is based on "IEEE 754" standard, often called "floating-point". JS specifically uses the "double precision" format (aka "64-bit binary") of the standard.
+
+    NUMERIC SYNTAX
+      Number literals are expressed in JS generally as base-10 decimal literals. For example, all these are valid:
+
+        var a = 42;
+        var b = 42.3;
+        var a = 0.42;
+        var b = .42;
+        var a = 42.0;
+        var b = 42.;  // Pretty uncommon and causes confusion
+      
+      By default, most numbers will be outputted as base-10 decimals, with trailing fractional 0s removed:
+
+        var a = 42.300;
+        var b = 42.0;
+
+        a; // 42.3
+        b; // 42
+      
+      Very larg or very small numbers will by default be outputted in exponent form, the same as the output of the toExponential() method:
+
+        var a = 5E10;
+        a;					// 50000000000
+        a.toExponential();	// "5e+10"
+
+        var b = a * a;
+        b;					// 2.5e+21
+
+        var c = 1 / a;
+        c;					// 2e-11
