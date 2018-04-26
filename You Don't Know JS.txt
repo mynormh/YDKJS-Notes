@@ -2149,7 +2149,7 @@ VALUES
         a; // 42.3
         b; // 42
       
-      Very larg or very small numbers will by default be outputted in exponent form, the same as the output of the toExponential() method:
+      Very large or very small numbers will by default be outputted in exponent form, the same as the output of the toExponential() method:
 
         var a = 5E10;
         a;					// 50000000000
@@ -2160,3 +2160,114 @@ VALUES
 
         var c = 1 / a;
         c;					// 2e-11
+
+      Because number values can be boxed with the Number object wrapper, number values can access methods that are built into the Number.prototype. Like toFixed(..) or toPrecision(..) 
+
+        var a = 42.59;
+
+        a.toFixed( 0 ); // "43"
+        a.toFixed( 1 ); // "42.6"
+        a.toFixed( 2 ); // "42.59"
+        a.toFixed( 3 ); // "42.590"
+
+        var a = 42.59;
+
+        a.toPrecision( 1 ); // "4e+1"
+        a.toPrecision( 2 ); // "43"
+        a.toPrecision( 3 ); // "42.6"
+        a.toPrecision( 4 ); // "42.59"
+        a.toPrecision( 5 ); // "42.590"
+    
+      You don't have to use a variable with the value in it to access these methods; you can access them directly on number literals. But be careful with the . operator, since it is a valid numeric character, it will first be interpreted as part of the number literal, instead of being interpreted as a property accessor.
+
+        // invalid syntax:
+        42.toFixed( 3 );	// SyntaxError
+
+        // these are all valid:
+        (42).toFixed( 3 );	// "42.000"
+        0.42.toFixed( 3 );	// "0.420"
+        42..toFixed( 3 );	// "42.000"
+        42 .toFixed(3); // "42.000" notice the space, valid but confusing
+      
+      numbers can also be specified in exponent form or in other bases:
+
+        var onethousand = 1E3;						// means 1 * 10^3
+        var onemilliononehundredthousand = 1.1E6;	// means 1.1 * 10^6
+        0xf3; // hexadecimal for: 243
+        0Xf3; // ditto
+        0o363;		// octal for: 243
+        0O363;		// ditto
+
+        0b11110011;	// binary for: 243
+        0B11110011; // ditto
+      
+    SMALL DECIMAL VALUES
+      The most infamous side effect of using binary floating-point numbers (IEEE 754) is:
+
+        0.1 + 0.2 === 0.3; // false
+
+      Mathematically, we know that should be true. But the representations for 0.1 and 0.2 in binary floating-point are not exact, so when they are added, the result is not exactly 0.3. It's really close: 0.30000000000000004, bit if the comparison fails, "close" is irrelevant.
+
+      Applications that only deal with whole numbers (integers) or only deal with numbers in the millions or trillions at maximum, are safe of this bug. 
+      
+      But if you need to compare numbers, like 0.1 + 0.2 = 0.3, the most commonly practice is to use a tiny "rounding error value as the tolerance comparison. This tiny value is often called "machine epsilon", which is commonly 2^-52 (2.220446049250313e-16) for the kind of numbers in JS.
+
+      As of ES6, Number.EPSILON is predefined with this tolerance value, so you'd want to use it, but you can safely polyfill it:
+
+        if (!Number.EPSILON) {
+          Number.EPSILON = Math.pow(2,-52);
+        }
+
+        function numbersCloseEnoughToEqual(n1,n2) {
+          return Math.abs( n1 - n2 ) < Number.EPSILON;
+        }
+
+        var a = 0.1 + 0.2;
+        var b = 0.3;
+
+        numbersCloseEnoughToEqual( a, b );					// true
+        numbersCloseEnoughToEqual( 0.0000001, 0.0000002 );	// false
+
+      The maximum floating-point value that can be represented is roughly 1.798e+308 (which is really huge), predefined for you as Number.MAX_VALUE. On the small end, Number.MIN_VALUE is roughly 5e-324, which isn't negative but is really close to zero.
+    
+    SAFE INTEGER RANGES
+      Because of how numbers are represented, ther is a range of "safe" values for the whole number "integers", and it's significantlly less than Number.MAX_VALUE.
+
+      The maximum integer that can "safely" be represented (that is, there's a guarantee that the value is actually representable unambiguously) is 2^53 - 1, which is 9007199254740991, predefined in ES6 as Number.MAX_SAFE_INTEGER. And there's a minimun value, -9007199254740991, defined in ES6 as Number.SAFE_INTEGER.
+
+      The main issue is when dealing with 64-bit IDs from databases, etc. 64-bit numbers cannot be represented accuaratly with the number type so must be stored in JS using string representation. Numeric operations on these ID number values (beside comparison, which is fine with strings) aren't that common.
+    
+    TESTING FOR integers
+      To test if a value is an integer, you can use the ES6-specified Number.isInteger(..), which you can polyfill:
+
+        if (!Number.isInteger) {
+          Number.isInteger = function(num) {
+            return typeof num == "number" && num % 1 == 0;
+          };
+        }
+
+        Number.isInteger( 42 );		// true
+        Number.isInteger( 42.000 );	// true
+        Number.isInteger( 42.3 );	// false
+      
+      To test if a value is a safe integer, use ES6's Number.isSafeInteger(..):
+
+        if (!Number.isSafeInteger) {
+          Number.isSafeInteger = function(num) {
+            return Number.isInteger( num ) &&
+              Math.abs( num ) <= Number.MAX_SAFE_INTEGER;
+          };
+        }
+      
+        Number.isSafeInteger( Number.MAX_SAFE_INTEGER );	// true
+        Number.isSafeInteger( Math.pow( 2, 53 ) );			// false
+        Number.isSafeInteger( Math.pow( 2, 53 ) - 1 );		// true
+
+      32-BIT (SIGNED) INTEGERS
+        While integers can range up to roughly 9 quadrillion safely (53 bits), there are some numeric operations (like the bitwise operators) that are only defined for 32-bit numbers, so the "safe range" for numbers used in that way must be much smaller.
+
+        The range then is Math.pow(-2,31) (-2147483648, about -2.1 billion) up to Math.pow(2,31)-1 (2147483647, about +2.1 billion).
+
+        To force a number value in `a` to a 32bit signed integer value, use `a | 0`. This works because the | bitwise operator only works for 32-bit integer values (the other bits will be lost).
+      
+      
