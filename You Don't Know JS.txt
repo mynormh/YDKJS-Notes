@@ -2237,7 +2237,7 @@ VALUES
 
       The main issue is when dealing with 64-bit IDs from databases, etc. 64-bit numbers cannot be represented accuaratly with the number type so must be stored in JS using string representation. Numeric operations on these ID number values (beside comparison, which is fine with strings) aren't that common.
     
-    TESTING FOR integers
+    TESTING FOR INTEGERS
       To test if a value is an integer, you can use the ES6-specified Number.isInteger(..), which you can polyfill:
 
         if (!Number.isInteger) {
@@ -2269,5 +2269,334 @@ VALUES
         The range then is Math.pow(-2,31) (-2147483648, about -2.1 billion) up to Math.pow(2,31)-1 (2147483647, about +2.1 billion).
 
         To force a number value in `a` to a 32bit signed integer value, use `a | 0`. This works because the | bitwise operator only works for 32-bit integer values (the other bits will be lost).
+  
+  SPECIAL VALUES
+
+    THE NON-VALUE VALUES
+      For both undefined and null types, thre is one and only one value: undefined and null, respectively. So, the label is both its type and its value.
+
+      Both undefined and null are often taken to be interchangeable as either "empty" values or "non" values. Other developers prefer to distinguish between them:
+
+        - null is an empty value
+        - undefined is a missing value
       
+      Regardless of how you choose to "define" and use these two values, null is a special keyword, not an identifier, and thus you cannot treat it as a variable to assignt to. However, undefined is (unfortunatel) an identifier.
+
+    UNDEFINED
+      In non-strict mode, it's possible (though ill-advised) to assign a value to the globally provided undefined identifier:
+
+        unction foo() {
+          undefined = 2; // really bad idea!
+        }
+
+        foo();
       
+      In both non-strict and strict modes, you can create a local variable called undefined (again, bad idea).
+
+        function foo() {
+          "use strict";
+          var undefined = 2;
+          console.log( undefined ); // 2
+        }
+
+        foo();
+      
+    VOID OPERATOR
+      While undefined is a built-in identifier that holds (unless modified) the built-in undefined value, another way to get this value is the void operator.
+
+      The expression `void ___` "voids" out any value, so that the result of the expression is always the undefined value. It doesn't modify the existing value; it just ensures that no value comes back from the operator expression.
+
+        var a = 42;
+
+        console.log( void a, a ); // undefined 42
+      
+      The void operator can be useful in some circumstances, if you need to ensure that an expression has no result value (even if it has side effects):
+
+        function doSomething() {
+          // note: `APP.ready` is provided by our application
+          if (!APP.ready) {
+            // try again later
+            return void setTimeout( doSomething, 100 );
+          }
+
+          var result;
+
+          // do some other stuff
+          return result;
+        }
+
+        // were we able to do it right away?
+        if (doSomething()) {
+          // handle next tasks right away
+        }
+      
+      Here, the setTimeout(..) function returns a numeric value (the unique identifier of the timer interval), but we want to void that out so that the reurn value of our function doesn't give a false-positive with the if statement.
+
+      Many devs prefer to just do these actions separately, which works the same but doesn't use the void operator:
+
+        if (!APP.ready) {
+          // try again later
+          setTimeout( doSomething, 100 );
+          return;
+        }
+      
+    SPECIAL NUMBERS
+      The number type includes several special values.
+
+      THE NOT NUMBER, NUMBER  
+        Any mathematic operation you perform without both operands being numbers (or values that can be interpreted as numbers) will result in the operation failing to produce a valid number, in which case you will get the NaN value.
+
+        NaN stands for "Not a Number", though it would be more accurate to think of it as being "invalid number" or "failed number".
+
+          var a = 2 / "foo";		// NaN
+
+          typeof a === "number";	// true
+        
+        In other words: "they type of not-a-number is number". Confusing.
+
+        Nan is a kind of "sentinel value" that represents a special kind of error condition within the number set, which in essence is: "I tried to perform a math operation but failed, so here's the failed number result instead".
+
+        So, if you have a value in some variable and want to test to see if it's NaN, you might think you could directly compare to Nan, as you can with any other value, like null or undefined.
+
+          var a = 2 / "foo";
+
+          a == NaN;	// false
+          a === NaN;	// false
+        
+        Nope. Nan is a very special value in that it's never equal to another NaN value (i.e., it's never equal to itself). It's the onl value that is not reflexive (NaN !== Nan).
+
+        So how do we test for it?
+          var a = 2 / "foo";
+
+          isNaN( a ); // true
+        
+        But, isNan(..) has a fatal flaw. It appears it tried to take the meaning of NaN (Not a Nomber) too literally: "test if the thing passed in is either a number or not a number". But that's not quite accurate:
+
+          var a = 2 / "foo";
+          var b = "foo";
+
+          a; // NaN
+          b; // "foo"
+
+          window.isNaN( a ); // true
+          window.isNaN( b ); // true -- ouch!
+        
+        Clearly, "foo" is literally not a number, but it's definitely not the Nan value either.
+
+        As of ES6, finally a replacement utility has been provided: Number.isNaN(..).
+
+          if (!Number.isNaN) {
+            Number.isNaN = function(n) {
+              return n !== n; // Taking advantage of NaN !== NaN
+            };
+          }
+
+          var a = 2 / "foo";
+          var b = "foo";
+
+          Number.isNaN( a ); // true
+          Number.isNaN( b ); // false -- phew!
+        
+      INFINITIES
+        Devs from traditional compiled languages are probably used to seeing either a compiler error or runtime exception, like "Divide by zero", for an operation like:
+
+          var a = 1 / 0;
+
+        However, in JS, this operation is well-defined and results in the value Infinity (Number.POSITIVE_INFINITY) or -Infinity (Number.NEGATIVE_INFINITY):
+
+          var a = 1 / 0;	// Infinity
+          var b = -1 / 0;	// -Infinity 
+        
+        JS uses finite numeric representations (IEEE 754 floating-point), so contrary to pure math, it seems it is possible to overflow even with an operation like addition or substraction:
+
+          var a = Number.MAX_VALUE;	// 1.7976931348623157e+308
+          a + a;  // Infinity
+          a + Math.pow( 2, 970 );		// Infinity
+          a + Math.pow( 2, 969 );		// 1.7976931348623157e+308
+        
+        Once you overflow to either of the infinites, there's no going back. You can go from finite to infinite (as seen above) but not from infinite back to finite, it'll always result in Infinity.
+      
+        But what about any positive finite number by Infinity? That's 0. And what about a negative finite number divided by Infinity? Keep reading.
+      
+      ZEROS
+        While it may be confusing, JS has both a normal zero 0 (otherwise known as +0) and a negative zero -0. Before we explain why the -0 exists, we should examine how JS handles it, because it can be confusing.
+
+        Besides being specified literally as -0, negative zero also results from certain math operations:
+
+          var a = 0 / -3; // -0
+          var b = 0 * -3; // -0
+        
+        Addition and substraction cannot result in -0.
+
+        However if you try to stringify a -0, it will alwasy be reported as "0":
+
+          var a = 0 / -3;
+
+          // (some browser) consoles at least get it right
+          a;							// -0
+
+          // but the spec insists on lying to you!
+          a.toString();				// "0"
+          a + "";						// "0"
+          String( a );				// "0"
+
+          // strangely, even JSON gets in on the deception
+          JSON.stringify( a );		// "0"
+
+        Interestingly, the reverse operations don't lie:
+
+          +"-0";				// -0
+          Number( "-0" );		// -0
+          JSON.parse( "-0" );	// -0
+        
+        Additionaly, the comparison operators are also configured to lie:
+
+          var a = 0;
+          var b = 0 / -3;
+
+          a == b;		// true
+          -0 == 0;	// true
+
+          a === b;	// true
+          -0 === 0;	// true
+
+          0 > -0;		// false
+          a > b;		// false
+        
+        Clearly, if you want to distinguish a -0 from a 0 you're going to have to be more clever:
+
+          function isNegZero(n) {
+            n = Number( n );
+            return (n === 0) && (1 / n === -Infinity);
+          }
+
+          isNegZero( -0 );		// true
+          isNegZero( 0 / -3 );	// true
+          isNegZero( 0 );			// false
+        
+        -0 is useful in some applications where devs use the magnitude of a value to represent one piece of information and the sign of the number to represent antoher (vectors, speed and direction of movement respectively).
+    
+    SPECIAL EQUALITY
+      As we saw above, the NaN value and the -0 value have special behavior when it comes to equality comparison. NaN !== NaN and -0 === 0. So you have to use Number.isNaN(..) and a somewhat hackish isNegZero(..).
+      
+      As of ES6, there's a new utility that can be used to test two values for absolute equality. It's called Objec.is(..):
+
+        var a = 2 / "foo";
+        var b = -3 * 0;
+
+        Object.is( a, NaN );	// true
+        Object.is( b, -0 );		// true
+
+        Object.is( b, 0 );		// false
+      
+      Object.is(..) probably shouldn't be used in cases where == or === are known to be safe, as the operators are likely much more efficient and certainly are more common. Object.is(..) is mostly for these special cases of equality.
+
+  VALUE VS. REFERENCE
+    In many other languages, values can either be assigned/passed by value-copy or by reference-copy depending on the syntax you use. References are like a special from of pointers, where you obtain a pointer to another variable (like an alias). If you don't declare a reference parameter, the value passed in will always be copied, even if it's a complex object.
+
+    In JS, there are no pointers, and references work a bit differently. You cannot have a reference from one JS variable to another variable. A reference in JS points at a (shared) value, so if you have 10 different references, they are always distinct references to a single shared value; none of them are references/pointers to each other.
+
+    Moreover, in JS there are no syntactic hints that control value vs reference assignment/passing. Instead the type of the value solely controls whether that value will be assigned by value-copy or by reference-copy.
+
+      var a = 2;
+      var b = a; // `b` is always a copy of the value in `a`
+      b++;
+      a; // 2
+      b; // 3
+
+      var c = [1,2,3];
+      var d = c; // `d` is a reference to the shared `[1,2,3]` value
+      d.push( 4 );
+      c; // [1,2,3,4]
+      d; // [1,2,3,4]
+    
+    Simple values (aka scalar primitives) are always assigned/passed by value-copy: null, undefined, string, number, boolean and ES6's symbol.
+
+    Compound values always create a copy of the reference on asignment/passing: objects (including arrays, and all boxed object wrappers) and functions.
+
+    It's important to note that neither c nor d "owns" the [1,2,3] value, both are just equal peer references to the value. So, when using either reference to modify the actual shared array value itself, it's affecting just the one shared value, and both references will reference the newly modified value [1,2,3,4].
+
+      var a = [1,2,3];
+      var b = a;
+      a; // [1,2,3]
+      b; // [1,2,3]
+
+      // later
+      b = [4,5,6];
+      a; // [1,2,3]
+      b; // [4,5,6]
+    
+    When we make the assignment b = [4,5,6], we are doing absolutely nothing to affect where a is still referencing ([1,2,3]). To do that, b would have to be a pointer to a rather than a reference to the array, but that's not possible in JS.
+
+    The most common way such confusion happens is with function parameters:
+
+      function foo(x) {
+        x.push( 4 );
+        x; // [1,2,3,4]
+
+        // later
+        x = [4,5,6];
+        x.push( 7 );
+        x; // [4,5,6,7]
+      }
+
+      var a = [1,2,3];
+
+      foo( a );
+
+      a; // [1,2,3,4]  not  [4,5,6,7]
+    
+    When we pass in the argument a, it assigns a copy of the a referece to x. x and a are separate references pointing at the same [1,2,3] value. Now, inside the function, we can use that reference to mutate the vlaue itself (push(4)). But when we make the assignment x = [4,5,6], this isn't affecting where the initial reference a is pointing (now the modified [1,2,3,4]) value.
+
+    To accomplish changing a to have the [4,5,6,7] value contents, you can't create a new array and assign. You must modify the existing array value:
+
+      function foo(x) {
+        x.push( 4 );
+        x; // [1,2,3,4]
+
+        // later
+        x.length = 0; // empty existing array in-place
+        x.push( 4, 5, 6, 7 );
+        x; // [4,5,6,7]
+      }
+
+      var a = [1,2,3];
+
+      foo( a );
+
+      a; // [4,5,6,7]  not  [1,2,3,4]
+    
+    To effectively pass a compound value (like array) by value-copy, you need to manually make a copy of it, so that the reference passed doesn't still point to the original:
+
+      foo( a.slice() );
+    
+    slice(..) with no parameters by default makes a new shallow copy of the array. So, we pass in a reference only to the copied array, and thus foo(..) cannot affect a.
+
+    To pass a scalar primitive value in a way where its value updates can be seen, you have to wrap the value in another compound value (object, array, etc.):
+
+      function foo(wrapper) {
+        wrapper.a = 42;
+      }
+
+      var obj = {
+        a: 2
+      };
+
+      foo( obj );
+
+      obj.a; // 42
+
+    It may occur to you that if you wanted to pass in a reference to a scalar primitive value like 2, you could just box the value in its Number object wrapper. It is true a copy of the reference to this Number object will be passed to the function, but having a reference to the shared object is not going to moidify the shared primitive value:
+
+      function foo(x) {
+        x = x + 1;
+        x; // 3
+      }
+
+      var a = 2;
+      var b = new Number( a ); // or equivalently `Object(a)`
+
+      foo( b );
+      console.log( b ); // 2, not 3
+    
+    The problem is that the underlying scalar primitive is not mutable (same goes for String and Boolean). If a Number object holds the scalar primitive value 2, that exact Number object can never be changed to hold another value; you can only create a whole new Number object with a different value.
